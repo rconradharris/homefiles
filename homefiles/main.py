@@ -4,7 +4,7 @@ import sys
 import homefiles
 import utils
 
-REPO_PATH='~/.homefiles'
+REPO_PATH = '~/.homefiles'
 ROOT_PATH = '~'
 
 

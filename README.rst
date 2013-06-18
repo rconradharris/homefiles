@@ -37,7 +37,6 @@ Clone Your Files From Another Machine::
     homefiles link
 
 
-
 Repo Layout
 ===========
 
@@ -51,7 +50,7 @@ platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
 
 ::
 
-    /
+    .homefiles/
         Generic/
             .vimrc
             bin/
@@ -66,3 +65,6 @@ platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
         Ubuntu/
             bin/
                 ubuntu_only.sh
+        Ubuntu-13.04/
+            bin/
+                raring_only.sh

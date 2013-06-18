@@ -43,14 +43,16 @@ class Homefiles(object):
         return marker
 
     def _get_platforms(self):
-        platforms = ['generic']
+        platforms = ['Generic']
         system = platform.system()
         if system:
             platforms.append(system)
             if system == 'Linux':
-                distro = platform.linux_distribution()
-                if distro:
-                    platforms.append(distro)
+                distname, version, distid = platform.linux_distribution()
+                if distname:
+                    platforms.append(distname)
+                    if version:
+                        platforms.append('-'.join([distname, version]))
 
         return platforms
 
