@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os
-import subprocess
 import sys
 
+import git
 import utils
 
 #REPO_PATH='~/.homefiles'
@@ -49,55 +49,11 @@ def track_directory(path):
     return marker
 
 
-class GitRepo(object):
-    def __init__(self, path):
-        self.path = path
-
-    @classmethod
-    def __run(cls, args):
-        if not DRY_RUN:
-            subprocess.check_call(['git'] + args)
-
-    def _run(self, args):
-        orig_path = os.getcwd()
-        os.chdir(self.path)
-        try:
-            self.__run(args)
-        finally:
-            os.chdir(orig_path)
-
-    def add(self, path):
-        utils.log("Adding '%s' to Git" % path, newline=False)
-        self._run(['add', path])
-        utils.log("[DONE]")
-
-    def commit_all(self, message):
-        utils.log("Commiting all files", newline=False)
-        self._run(['commit', '-a', '-m', message])
-        utils.log("[DONE]")
-
-    def pull_origin(self):
-        utils.log("Pulling origin", newline=False)
-        self._run(['pull', 'origin', 'master'])
-        utils.log("[DONE]")
-
-    def push_origin(self):
-        utils.log("Pushing origin", newline=False)
-        self._run(['push', 'origin', 'master'])
-        utils.log("[DONE]")
-
-    @classmethod
-    def clone(self, url):
-        utils.log("Cloning '%s'" % url, newline=False)
-        self.__run(['clone', url])
-        utils.log("[DONE]")
-
-
 class Homefiles(object):
     def __init__(self, root_path, repo_path):
         self.root_path = root_path
         self.repo_path = repo_path
-        self.git = GitRepo(repo_path)
+        self.git = git.GitRepo(repo_path, dry_run=DRY_RUN)
 
     def _get_os_names(self):
         return [p for p in os.listdir(self.repo_path)
@@ -185,7 +141,7 @@ class Homefiles(object):
         else:
             url = "git@github.com:%(username)s/%(repo)s.git" % dict(
                     username=origin, repo=REMOTE_REPO)
-        self.git.clone(url)
+        self.git.clone(url, dry_run=DRY_RUN)
         utils.rename(REMOTE_REPO, self.repo_path, dry_run=DRY_RUN)
 
 
