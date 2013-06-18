@@ -1,9 +1,12 @@
 import setuptools
 
 
+exec('homefiles/version.py')
+
+
 setuptools.setup(
     name='homefiles',
-    version='2.0',
+    version=__version__,
     description='Your files, anywhere.',
     url='https://github.com/rconradharris/homefiles2',
     license='MIT',

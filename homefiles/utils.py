@@ -1,7 +1,12 @@
 import os
 
+LOG_VERBOSE = False
+
 
 def log(msg, newline=True):
+    if not LOG_VERBOSE:
+        return
+
     if newline:
         print msg
     else:

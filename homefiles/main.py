@@ -1,8 +1,11 @@
+import optparse
 import os
 import sys
 
 import homefiles
 import utils
+import version
+
 
 REPO_PATH = '~/.homefiles'
 ROOT_PATH = '~'
@@ -10,45 +13,68 @@ ROOT_PATH = '~'
 
 def usage():
     prog = os.path.basename(sys.argv[0])
-    utils.log("%s [--dry-run] [clone|link|sync|track|unlink] [filename]"
-              % prog)
-    sys.exit(1)
+    return "%s [options] [clone|link|sync|track|unlink] [filename]" % prog
 
 
 def main():
-    dry_run = '--dry-run' in sys.argv
+    parser = optparse.OptionParser(usage())
+    parser.add_option("-d", "--dry-run",
+                      action="store_true", dest="dry_run", default=False,
+                      help="Don't actually make the changes")
+    parser.add_option("-v", "--verbose",
+                      action="store_true", dest="verbose", default=False,
+                      help="Turns on verbose output.")
+    parser.add_option("--version",
+                      action="store_true", dest="version", default=False,
+                      help="Print version and exit")
+
+    options, args = parser.parse_args()
+
+    if options.version:
+        print version.__version__
+        return
+
+    utils.LOG_VERBOSE = options.verbose
+
     root_path = utils.truepath(ROOT_PATH)
     repo_path = utils.truepath(REPO_PATH)
 
-    hf = homefiles.Homefiles(root_path, repo_path, dry_run=dry_run)
+    hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
 
     try:
-        cmd = sys.argv[1]
+        cmd = args[0]
     except IndexError:
-        usage()
+        parser.print_help()
+        print >> sys.stderr, usage()
+        sys.exit(1)
 
     if cmd == 'clone':
         try:
-            origin = sys.argv[2]
+            origin = args[1]
         except IndexError:
-            usage()
+            print >> sys.stderr, usage()
+            sys.exit(1)
+
         hf.clone(origin)
     elif cmd == 'link':
         hf.link()
     elif cmd == 'sync':
         try:
-            message = sys.argv[2]
+            message = args[1]
         except IndexError:
             message = 'Sync'
         hf.sync(message)
     elif cmd == 'track':
         try:
-            path = sys.argv[2]
+            path = args[1]
         except IndexError:
-            usage()
+            print >> sys.stderr, usage()
+            sys.exit(1)
+
         hf.track(path)
     elif cmd == 'unlink':
         hf.unlink()
     else:
-        utils.log("error: Unrecognized command '%s'" % cmd)
-        usage()
+        print >> sys.stderr, "error: Unrecognized command '%s'" % cmd
+        print >> sys.stderr, usage()
+        sys.exit(1)
