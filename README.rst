@@ -16,19 +16,23 @@ Getting Started
 ===============
 
 Install::
+
     pip install homefiles
 
 
 Track Your Files::
+
     homefiles init
     homefiles track ~/.vimrc
 
 
 Sync Your Files To GitHub::
+
     homefiles sync 'Added vimrc'
 
 
 Clone Your Files From Another Machine::
+
     homefiles clone rconradharris
     homefiles link
 
@@ -46,6 +50,7 @@ platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
 ``$HOME/Documents/code/mac_only.sh`` only on Macs.
 
 ::
+
     /
         Generic/
             .vimrc
