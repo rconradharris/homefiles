@@ -2,11 +2,11 @@
 import os
 import sys
 
-#REPO_LOCATION='~/.homefiles'
-ROOT = '~'
-REPO_LOCATION = '~/Documents/code/.homefiles'
+#REPO_PATH='~/.homefiles'
+ROOT_PATH = '~'
+REPO_PATH = '~/Documents/code/.homefiles'
 DRY_RUN = True
-
+OS_NAME = 'generic'
 
 def log(msg, newline=True):
     if newline:
@@ -70,33 +70,53 @@ def mkdir(path):
         log("[DONE]")
 
 
-def link(os_location):
-    root = os.path.expanduser(ROOT)
-    repo_location = os.path.expanduser(REPO_LOCATION)
-    for dirpath, dirnames, filenames in os.walk(os_location):
-        for dirname in dirnames:
-            src_dirpath = os.path.join(dirpath, dirname)
-            dst_dirpath = os.path.join(root, dirname)
-            if is_directory_tracked(src_dirpath):
-                symlink(src_dirpath, dst_dirpath)
-            else:
-                mkdir(dst_dirpath)
+class Homefiles(object):
+    def __init__(self, root_path, repo_path):
+        self.root_path = root_path
+        self.repo_path = repo_path
 
-        if not is_directory_tracked(dirpath):
-            for filename in filenames:
-                relpath = dirpath.replace(os.path.commonprefix(
-                    [os_location, dirpath]), '').lstrip('/')
+    def _get_os_names(self):
+        return [p for p in os.listdir(self.repo_path)
+                if p != '.git' and os.path.isdir(os.path.join(self.repo_path, p))]
 
-                src_filename = os.path.join(dirpath, filename)
-                dst_filename = os.path.join(root, relpath, filename)
-                symlink(src_filename, dst_filename)
+    def _link_os_bundle(self, os_name):
+        """Symlink all the things."""
+        log("Linking bundle '%s'" % os.name)
+        os_path = os.path.join(self.repo_path, os_name)
+
+        for dirpath, dirnames, filenames in os.walk(os_path):
+            for dirname in dirnames:
+                src_dirpath = os.path.join(dirpath, dirname)
+                dst_dirpath = os.path.join(self.root_path, dirname)
+                if is_directory_tracked(src_dirpath):
+                    symlink(src_dirpath, dst_dirpath)
+                else:
+                    mkdir(dst_dirpath)
+
+            if not is_directory_tracked(dirpath):
+                for filename in filenames:
+                    relpath = dirpath.replace(os.path.commonprefix(
+                        [os_path, dirpath]), '').lstrip('/')
+
+                    src_filename = os.path.join(dirpath, filename)
+                    dst_filename = os.path.join(
+                            self.root_path, relpath, filename)
+                    symlink(src_filename, dst_filename)
+
+    def link(self):
+        for os_name in self._get_os_names():
+            self._link_os_bundle(os_name)
+
+    def track(self, path):
+        """Track a file or a directory."""
+        pass
 
 
 def main():
-    root = os.path.expanduser(ROOT)
-    repo_location = os.path.expanduser(REPO_LOCATION)
+    root_path = os.path.expanduser(ROOT_PATH)
+    repo_path = os.path.expanduser(REPO_PATH)
 
-    generic_location = os.path.join(repo_location, 'generic')
+    homefiles = Homefiles(root_path, repo_path)
 
     try:
         cmd = sys.argv[1]
@@ -106,7 +126,7 @@ def main():
     if cmd == 'clone':
         raise NotImplementedError
     elif cmd == 'link':
-        link(generic_location)
+        homefiles.link()
     elif cmd == 'sync':
         raise NotImplementedError
     elif cmd == 'track':

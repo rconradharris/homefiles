@@ -20,25 +20,6 @@ install.sh
                 .trackeddir
 
 
-        notes
-
-
-        files/
-            .vimrc
-            bin/
-                vmrun
-        directories/
-            __Documents/
-                __code/
-                    notes/
-                        .trackeddir
-
-
-	    __bin/
-	       file.txt
-	       homefiles
-	    notes/
-	       .gitkeep
     
 - Start with generic/
 - Prototype w/ python; decide whether to rewrite in sh
