@@ -6,6 +6,8 @@ import sys
 #REPO_PATH='~/.homefiles'
 ROOT_PATH = '~'
 REPO_PATH = '~/Documents/code/.homefiles'
+REMOTE_REPO = '.homefiles'
+
 DRY_RUN = True
 OS_NAME = 'generic'
 
@@ -125,14 +127,18 @@ class GitRepo(object):
     def __init__(self, path):
         self.path = path
 
-    def _run(self, args):
+    @classmethod
+    def __run(cls, args):
         if not DRY_RUN:
-            orig_path = os.getcwd()
-            os.chdir(self.path)
-            try:
-                subprocess.check_call(['git'] + args)
-            finally:
-                os.chdir(orig_path)
+            subprocess.check_call(['git'] + args)
+
+    def _run(self, args):
+        orig_path = os.getcwd()
+        os.chdir(self.path)
+        try:
+            self.__run(args)
+        finally:
+            os.chdir(orig_path)
 
     def add(self, path):
         log("Adding '%s' to Git" % path, newline=False)
@@ -152,6 +158,12 @@ class GitRepo(object):
     def push_origin(self):
         log("Pushing origin", newline=False)
         self._run(['push', 'origin', 'master'])
+        log("[DONE]")
+
+    @classmethod
+    def clone(self, url):
+        log("Cloning '%s'" % url, newline=False)
+        self.__run(['clone', url])
         log("[DONE]")
 
 
@@ -241,6 +253,15 @@ class Homefiles(object):
         self.git.pull_origin()
         self.git.push_origin()
 
+    def clone(self, origin):
+        if '://' in origin:
+            url = origin
+        else:
+            url = "git@github.com:%(username)s/%(repo)s.git" % dict(
+                    username=origin, repo=REMOTE_REPO)
+        self.git.clone(url)
+        rename(REMOTE_REPO, self.repo_path)
+
 
 def main():
     root_path = truepath(ROOT_PATH)
@@ -254,7 +275,11 @@ def main():
         usage()
 
     if cmd == 'clone':
-        raise NotImplementedError
+        try:
+            origin = sys.argv[2]
+        except IndexError:
+            usage()
+        homefiles.clone(origin)
     elif cmd == 'link':
         homefiles.link()
     elif cmd == 'sync':
