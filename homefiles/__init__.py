@@ -3,6 +3,8 @@ import os
 import subprocess
 import sys
 
+import utils
+
 #REPO_PATH='~/.homefiles'
 ROOT_PATH = '~'
 REPO_PATH = '~/Documents/code/.homefiles'
@@ -11,28 +13,10 @@ REMOTE_REPO = '.homefiles'
 DRY_RUN = True
 OS_NAME = 'generic'
 
-def log(msg, newline=True):
-    if newline:
-        print msg
-    else:
-        print msg,
-
-
 def usage():
     prog = os.path.basename(sys.argv[0])
-    log("%s [clone|link|sync|track|unlink] [filename]" % prog)
+    utils.log("%s [clone|link|sync|track|unlink] [filename]" % prog)
     sys.exit(1)
-
-
-def truepath(path):
-    path = os.path.expanduser(path)
-    path = os.path.abspath(path)
-    return path
-
-
-def relpath(base_path, dirpath):
-    return dirpath.replace(os.path.commonprefix(
-        [base_path, dirpath]), '').lstrip('/')
 
 
 TRACKED_DIRECTORIES = {}
@@ -56,71 +40,13 @@ def is_directory_tracked(path):
 
 
 def track_directory(path):
-    log("Tracking directory '%s'" % path, newline=False)
+    utils.log("Tracking directory '%s'" % path, newline=False)
     marker = os.path.join(path, '.trackeddir')
     if not DRY_RUN:
         with open(marker) as f:
             pass
-    log("[DONE]")
+    utils.log("[DONE]")
     return marker
-
-
-def symlink(source, link_name):
-    log("Symlinking '%s' -> '%s'" % (source, link_name), newline=False)
-    if os.path.exists(link_name):
-        log("[SKIPPED]")
-        return
-    try:
-        if not DRY_RUN:
-            os.symlink(source, link_name)
-    except:
-        log("[FAILED]")
-        raise
-    else:
-        log("[DONE]")
-
-
-def mkdir(path):
-    log("Creating directory '%s'" % path, newline=False)
-    if os.path.exists(path):
-        log("[SKIPPED]")
-        return
-    try:
-        if not DRY_RUN:
-            os.mkdir(path)
-    except:
-        log("[FAILED]")
-        raise
-    else:
-        log("[DONE]")
-
-
-def rename(src, dst):
-    log("Renaming '%s' -> '%s'" % (src, dst), newline=False)
-    if os.path.exists(dst):
-        log("[SKIPPED]")
-        return
-    try:
-        if not DRY_RUN:
-            os.rename(src, dst)
-    except:
-        log("[FAILED]")
-        raise
-    else:
-        log("[DONE]")
-    pass
-
-
-def remove_symlink(path):
-    log("Removing symlink '%s'" % path, newline=False)
-    if not os.path.exists(path):
-        log("[SKIPPED]")
-        return
-    if not os.path.islink(path):
-        raise Exception("Path '%s' is not a symlink" % path)
-    if not DRY_RUN:
-        os.unlink(path)
-    log("[DONE]")
 
 
 class GitRepo(object):
@@ -141,30 +67,30 @@ class GitRepo(object):
             os.chdir(orig_path)
 
     def add(self, path):
-        log("Adding '%s' to Git" % path, newline=False)
+        utils.log("Adding '%s' to Git" % path, newline=False)
         self._run(['add', path])
-        log("[DONE]")
+        utils.log("[DONE]")
 
     def commit_all(self, message):
-        log("Commiting all files", newline=False)
+        utils.log("Commiting all files", newline=False)
         self._run(['commit', '-a', '-m', message])
-        log("[DONE]")
+        utils.log("[DONE]")
 
     def pull_origin(self):
-        log("Pulling origin", newline=False)
+        utils.log("Pulling origin", newline=False)
         self._run(['pull', 'origin', 'master'])
-        log("[DONE]")
+        utils.log("[DONE]")
 
     def push_origin(self):
-        log("Pushing origin", newline=False)
+        utils.log("Pushing origin", newline=False)
         self._run(['push', 'origin', 'master'])
-        log("[DONE]")
+        utils.log("[DONE]")
 
     @classmethod
     def clone(self, url):
-        log("Cloning '%s'" % url, newline=False)
+        utils.log("Cloning '%s'" % url, newline=False)
         self.__run(['clone', url])
-        log("[DONE]")
+        utils.log("[DONE]")
 
 
 class Homefiles(object):
@@ -178,7 +104,7 @@ class Homefiles(object):
                 if p != '.git' and os.path.isdir(os.path.join(self.repo_path, p))]
 
     def _link_os_bundle(self, os_name):
-        log("Linking bundle '%s'" % os_name)
+        utils.log("Linking bundle '%s'" % os_name)
         os_path = os.path.join(self.repo_path, os_name)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
@@ -186,39 +112,39 @@ class Homefiles(object):
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, dirname)
                 if is_directory_tracked(src_dirpath):
-                    symlink(src_dirpath, dst_dirpath)
+                    utils.symlink(src_dirpath, dst_dirpath, dry_run=DRY_RUN)
                 else:
-                    mkdir(dst_dirpath)
+                    utils.mkdir(dst_dirpath, dry_run=DRY_RUN)
 
             if not is_directory_tracked(dirpath):
                 for filename in filenames:
                     src_filename = os.path.join(dirpath, filename)
                     dst_filename = os.path.join(
-                            self.root_path, relpath(os_path, dirpath),
+                            self.root_path, utils.relpath(os_path, dirpath),
                             filename)
-                    symlink(src_filename, dst_filename)
+                    utils.symlink(src_filename, dst_filename, dry_run=DRY_RUN)
 
     def link(self):
         for os_name in self._get_os_names():
             self._link_os_bundle(os_name)
 
     def _unlink_os_bundle(self, os_name):
-        log("Unlinking bundle '%s'" % os_name)
+        utils.log("Unlinking bundle '%s'" % os_name)
         os_path = os.path.join(self.repo_path, os_name)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
             if not is_directory_tracked(dirpath):
                 for filename in filenames:
                     file_path = os.path.join(
-                            self.root_path, relpath(os_path, dirpath),
+                            self.root_path, utils.relpath(os_path, dirpath),
                             filename)
-                    remove_symlink(file_path)
+                    utils.remove_symlink(file_path, dry_run=DRY_RUN)
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, dirname)
                 if is_directory_tracked(src_dirpath):
-                    remove_symlink(dst_dirpath)
+                    utils.remove_symlink(dst_dirpath, dry_run=DRY_RUN)
 
     def unlink(self):
         for os_name in self._get_os_names():
@@ -226,20 +152,20 @@ class Homefiles(object):
 
     def track(self, path, os_name='generic'):
         """Track a file or a directory."""
-        src_path = truepath(path)
+        src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)
 
         if self.root_path not in src_path:
             raise Exception('Cannot track files outside of root path')
 
         os_path = os.path.join(self.repo_path, os_name)
-        dst_path = os.path.join(os_path, relpath(self.root_path, src_path))
+        dst_path = os.path.join(os_path, utils.relpath(self.root_path, src_path))
 
         try:
-            rename(src_path, dst_path)
-            symlink(dst_path, src_path)
+            utils.rename(src_path, dst_path, dry_run=DRY_RUN)
+            utils.symlink(dst_path, src_path, dry_run=DRY_RUN)
         except:
-            rename(dst_path, src_path)
+            utils.rename(dst_path, src_path, dry_run=DRY_RUN)
             raise
 
         self.git.add(dst_path)
@@ -260,12 +186,12 @@ class Homefiles(object):
             url = "git@github.com:%(username)s/%(repo)s.git" % dict(
                     username=origin, repo=REMOTE_REPO)
         self.git.clone(url)
-        rename(REMOTE_REPO, self.repo_path)
+        utils.rename(REMOTE_REPO, self.repo_path, dry_run=DRY_RUN)
 
 
 def main():
-    root_path = truepath(ROOT_PATH)
-    repo_path = truepath(REPO_PATH)
+    root_path = utils.truepath(ROOT_PATH)
+    repo_path = utils.truepath(REPO_PATH)
 
     homefiles = Homefiles(root_path, repo_path)
 
@@ -297,5 +223,5 @@ def main():
     elif cmd == 'unlink':
         homefiles.unlink()
     else:
-        log("error: Unrecognized command '%s'" % cmd)
+        utils.log("error: Unrecognized command '%s'" % cmd)
         usage()
