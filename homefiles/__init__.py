@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import platform
 
 import git
 import utils
@@ -41,14 +42,24 @@ class Homefiles(object):
         utils.log("[DONE]")
         return marker
 
-    def _get_os_names(self):
-        return [p for p in os.listdir(self.repo_path)
-                if p != '.git' and os.path.isdir(
-                    os.path.join(self.repo_path, p))]
+    def _get_platforms(self):
+        platforms = ['generic']
+        system = platform.system()
+        if system:
+            platforms.append(system)
+            if system == 'Linux':
+                distro = platform.linux_distribution()
+                if distro:
+                    platforms.append(distro)
 
-    def _link_os_bundle(self, os_name):
-        utils.log("Linking bundle '%s'" % os_name)
-        os_path = os.path.join(self.repo_path, os_name)
+        return platforms
+
+    def _link_bundle(self, platform):
+        os_path = os.path.join(self.repo_path, platform)
+        if not os.path.exists(os_path):
+            return
+
+        utils.log("Linking bundle '%s'" % platform)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
             for dirname in dirnames:
@@ -70,12 +81,15 @@ class Homefiles(object):
                                   dry_run=self.dry_run)
 
     def link(self):
-        for os_name in self._get_os_names():
-            self._link_os_bundle(os_name)
+        for platform in self._get_platforms():
+            self._link_bundle(platform)
 
-    def _unlink_os_bundle(self, os_name):
-        utils.log("Unlinking bundle '%s'" % os_name)
-        os_path = os.path.join(self.repo_path, os_name)
+    def _unlink_bundle(self, platform):
+        os_path = os.path.join(self.repo_path, platform)
+        if not os.path.exists(os_path):
+            return
+
+        utils.log("Unlinking bundle '%s'" % platform)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
             if not self._is_directory_tracked(dirpath):
@@ -92,10 +106,10 @@ class Homefiles(object):
                     utils.remove_symlink(dst_dirpath, dry_run=self.dry_run)
 
     def unlink(self):
-        for os_name in self._get_os_names():
-            self._unlink_os_bundle(os_name)
+        for platform in self._get_platforms():
+            self._unlink_bundle(platform)
 
-    def track(self, path, os_name='generic'):
+    def track(self, path, platform='generic'):
         """Track a file or a directory."""
         src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)
@@ -103,7 +117,7 @@ class Homefiles(object):
         if self.root_path not in src_path:
             raise Exception('Cannot track files outside of root path')
 
-        os_path = os.path.join(self.repo_path, os_name)
+        os_path = os.path.join(self.repo_path, platform)
         dst_path = os.path.join(
             os_path, utils.relpath(self.root_path, src_path))
 
