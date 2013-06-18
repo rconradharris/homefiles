@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import subprocess
 import sys
 
 #REPO_PATH='~/.homefiles'
@@ -108,6 +109,18 @@ def rename(src, dst):
     pass
 
 
+def remove_symlink(path):
+    log("Removing symlink '%s'" % path, newline=False)
+    if not os.path.exists(path):
+        log("[SKIPPED]")
+        return
+    if not os.path.islink(path):
+        raise Exception("Path '%s' is not a symlink" % path)
+    if not DRY_RUN:
+        os.unlink(path)
+    log("[DONE]")
+
+
 class GitRepo(object):
     def __init__(self, path):
         self.path = path
@@ -153,7 +166,6 @@ class Homefiles(object):
                 if p != '.git' and os.path.isdir(os.path.join(self.repo_path, p))]
 
     def _link_os_bundle(self, os_name):
-        """Symlink all the things."""
         log("Linking bundle '%s'" % os_name)
         os_path = os.path.join(self.repo_path, os_name)
 
@@ -177,6 +189,28 @@ class Homefiles(object):
     def link(self):
         for os_name in self._get_os_names():
             self._link_os_bundle(os_name)
+
+    def _unlink_os_bundle(self, os_name):
+        log("Unlinking bundle '%s'" % os_name)
+        os_path = os.path.join(self.repo_path, os_name)
+
+        for dirpath, dirnames, filenames in os.walk(os_path):
+            if not is_directory_tracked(dirpath):
+                for filename in filenames:
+                    file_path = os.path.join(
+                            self.root_path, relpath(os_path, dirpath),
+                            filename)
+                    remove_symlink(file_path)
+
+            for dirname in dirnames:
+                src_dirpath = os.path.join(dirpath, dirname)
+                dst_dirpath = os.path.join(self.root_path, dirname)
+                if is_directory_tracked(src_dirpath):
+                    remove_symlink(dst_dirpath)
+
+    def unlink(self):
+        for os_name in self._get_os_names():
+            self._unlink_os_bundle(os_name)
 
     def track(self, path, os_name='generic'):
         """Track a file or a directory."""
@@ -236,7 +270,7 @@ def main():
             usage()
         homefiles.track(path)
     elif cmd == 'unlink':
-        raise NotImplementedError
+        homefiles.unlink()
     else:
         log("error: Unrecognized command '%s'" % cmd)
         usage()
