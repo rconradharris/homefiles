@@ -1,17 +1,10 @@
 #!/usr/bin/env python
 import os
-import sys
 
 import git
 import utils
 
-#REPO_PATH='~/.homefiles'
-ROOT_PATH = '~'
-REPO_PATH = '~/Documents/code/.homefiles'
 REMOTE_REPO = '.homefiles'
-
-DRY_RUN = True
-OS_NAME = 'generic'
 
 
 class Homefiles(object):
@@ -31,7 +24,7 @@ class Homefiles(object):
         except KeyError:
             pass
         self.tracked_directories[path] = tracked = os.path.exists(
-                os.path.join(path, '.trackeddir'))
+            os.path.join(path, '.trackeddir'))
         if tracked:
             return True
         elif path == '/':
@@ -50,7 +43,8 @@ class Homefiles(object):
 
     def _get_os_names(self):
         return [p for p in os.listdir(self.repo_path)
-                if p != '.git' and os.path.isdir(os.path.join(self.repo_path, p))]
+                if p != '.git' and os.path.isdir(
+                    os.path.join(self.repo_path, p))]
 
     def _link_os_bundle(self, os_name):
         utils.log("Linking bundle '%s'" % os_name)
@@ -62,7 +56,7 @@ class Homefiles(object):
                 dst_dirpath = os.path.join(self.root_path, dirname)
                 if self._is_directory_tracked(src_dirpath):
                     utils.symlink(src_dirpath, dst_dirpath,
-                            dry_run=self.dry_run)
+                                  dry_run=self.dry_run)
                 else:
                     utils.mkdir(dst_dirpath, dry_run=self.dry_run)
 
@@ -70,10 +64,10 @@ class Homefiles(object):
                 for filename in filenames:
                     src_filename = os.path.join(dirpath, filename)
                     dst_filename = os.path.join(
-                            self.root_path, utils.relpath(os_path, dirpath),
-                            filename)
+                        self.root_path, utils.relpath(os_path, dirpath),
+                        filename)
                     utils.symlink(src_filename, dst_filename,
-                            dry_run=self.dry_run)
+                                  dry_run=self.dry_run)
 
     def link(self):
         for os_name in self._get_os_names():
@@ -87,8 +81,8 @@ class Homefiles(object):
             if not self._is_directory_tracked(dirpath):
                 for filename in filenames:
                     file_path = os.path.join(
-                            self.root_path, utils.relpath(os_path, dirpath),
-                            filename)
+                        self.root_path, utils.relpath(os_path, dirpath),
+                        filename)
                     utils.remove_symlink(file_path, dry_run=self.dry_run)
 
             for dirname in dirnames:
@@ -110,7 +104,8 @@ class Homefiles(object):
             raise Exception('Cannot track files outside of root path')
 
         os_path = os.path.join(self.repo_path, os_name)
-        dst_path = os.path.join(os_path, utils.relpath(self.root_path, src_path))
+        dst_path = os.path.join(
+            os_path, utils.relpath(self.root_path, src_path))
 
         try:
             utils.rename(src_path, dst_path, dry_run=self.dry_run)
@@ -134,51 +129,9 @@ class Homefiles(object):
         if '://' in origin:
             url = origin
         else:
-            url = "git@github.com:%(username)s/%(repo)s.git" % dict(
-                    username=origin, repo=REMOTE_REPO)
+            data = dict(username=origin, repo=REMOTE_REPO)
+            url = "git@github.com:%(username)s/%(repo)s.git" % data
+
         self.git.clone(url, dry_run=self.dry_run)
-        utils.rename(REMOTE_REPO, self.repo_path, dry_run=self.dry_run)
-
-
-def usage():
-    prog = os.path.basename(sys.argv[0])
-    utils.log("%s [clone|link|sync|track|unlink] [filename]" % prog)
-    sys.exit(1)
-
-
-def main():
-    root_path = utils.truepath(ROOT_PATH)
-    repo_path = utils.truepath(REPO_PATH)
-
-    homefiles = Homefiles(root_path, repo_path, dry_run=DRY_RUN)
-
-    try:
-        cmd = sys.argv[1]
-    except IndexError:
-        usage()
-
-    if cmd == 'clone':
-        try:
-            origin = sys.argv[2]
-        except IndexError:
-            usage()
-        homefiles.clone(origin)
-    elif cmd == 'link':
-        homefiles.link()
-    elif cmd == 'sync':
-        try:
-            message = sys.argv[2]
-        except IndexError:
-            message = 'Sync'
-        homefiles.sync(message)
-    elif cmd == 'track':
-        try:
-            path = sys.argv[2]
-        except IndexError:
-            usage()
-        homefiles.track(path)
-    elif cmd == 'unlink':
-        homefiles.unlink()
-    else:
-        utils.log("error: Unrecognized command '%s'" % cmd)
-        usage()
+        repo_name = url.split('/')[-1].replace('.git', '')
+        utils.rename(repo_name, self.repo_path, dry_run=self.dry_run)

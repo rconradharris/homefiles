@@ -18,6 +18,6 @@ setuptools.setup(
     ],
     install_requires=[],
     entry_points={
-        'console_scripts': ['homefiles = homefiles:main']
+        'console_scripts': ['homefiles = homefiles.main:main']
     }
 )

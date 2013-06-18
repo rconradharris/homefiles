@@ -47,5 +47,3 @@ class GitRepo(object):
         utils.log("Cloning '%s'" % url, newline=False)
         self.__run(['clone', url], dry_run=dry_run)
         utils.log("[DONE]")
-
-

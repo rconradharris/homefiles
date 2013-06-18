@@ -74,5 +74,3 @@ def remove_symlink(path, dry_run=False):
     if not dry_run:
         os.unlink(path)
     log("[DONE]")
-
-
