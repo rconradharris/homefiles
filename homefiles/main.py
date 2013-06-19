@@ -13,17 +13,12 @@ ROOT_PATH = '~'
 
 def usage():
     prog = os.path.basename(sys.argv[0])
-    commands = "[clone|init|link|sync|track|unlink|untrack]"
+    commands = "[bundles|clone|init|link|sync|track|unlink|untrack]"
     return "%s [options] %s [filename]" % (prog, commands)
 
 
 def main():
     parser = optparse.OptionParser(usage())
-    parser.add_option("-a", "--available-bundles",
-                      action="store_true", dest="available_bundles",
-                      default=False,
-                      help="Print available bundles for this machine"
-                           " and exit.")
     parser.add_option("-d", "--dry-run",
                       action="store_true", dest="dry_run", default=False,
                       help="Don't actually make the changes")
@@ -52,12 +47,6 @@ def main():
     hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
     bundles = hf.available_bundles()
 
-    if options.available_bundles:
-        print 'Bundles available for this machine:'
-        for bundle in bundles:
-            print '- %s' % bundle
-        return
-
     try:
         cmd = args[0]
     except IndexError:
@@ -65,7 +54,10 @@ def main():
         print >> sys.stderr, usage()
         sys.exit(1)
 
-    if cmd == 'clone':
+    if cmd == 'bundles':
+        for bundle in bundles:
+            print '- %s' % bundle
+    elif cmd == 'clone':
         try:
             origin = args[1]
         except IndexError:
