@@ -162,12 +162,12 @@ class Homefiles(object):
         ## TODO: Detect locally removed files and mark them as untracked?
 
         self.unlink()
-
         try:
             self.git.pull_origin()
-            self.git.push_origin()
         finally:
             self.link()
+
+        self.git.push_origin()
 
     def _make_remote_url(self, origin):
         if '://' in origin:
