@@ -123,7 +123,10 @@ class Homefiles(object):
         dst_path = os.path.join(
             os_path, utils.relpath(self.root_path, src_path))
 
-        os.makedirs(os.path.dirname(dst_path))
+        dst_dir = os.path.dirname(dst_path)
+        if not os.path.exists(dst_dir):
+            os.makedirs(dst_dir)
+
         try:
             utils.rename(src_path, dst_path, dry_run=self.dry_run)
             utils.symlink(dst_path, src_path, dry_run=self.dry_run)
@@ -170,3 +173,22 @@ class Homefiles(object):
 
         utils.mkdir(self.repo_path)
         self.git.init()
+
+    def untrack(self, path):
+        dst_path = utils.truepath(path)
+
+        if not os.path.exists(dst_path):
+            raise Exception("Path '%s' not found" % dst_path)
+
+        if not os.path.islink(dst_path):
+            raise Exception("Path '%s' is not a symlink" % dst_path)
+
+        src_path = os.path.realpath(dst_path)
+
+        try:
+            utils.remove_symlink(dst_path, dry_run=self.dry_run)
+            utils.rename(src_path, dst_path, dry_run=self.dry_run)
+        except:
+            utils.symlink(dst_path, src_path, dry_run=self.dry_run)
+
+        self.git.rm(src_path)

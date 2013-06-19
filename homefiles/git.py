@@ -31,6 +31,11 @@ class GitRepo(object):
         self._run(['add', path])
         utils.log("[DONE]")
 
+    def rm(self, path):
+        utils.log("Removing '%s' from Git" % path, newline=False)
+        self._run(['rm', path])
+        utils.log("[DONE]")
+
     def commit_all(self, message):
         utils.log("Commiting all files", newline=False)
         self._run(['commit', '-a', '-m', message])

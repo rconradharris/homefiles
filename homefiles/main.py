@@ -13,7 +13,7 @@ ROOT_PATH = '~'
 
 def usage():
     prog = os.path.basename(sys.argv[0])
-    commands = "[clone|init|link|sync|track|unlink]"
+    commands = "[clone|init|link|sync|track|unlink|untrack]"
     return "%s [options] %s [filename]" % (prog, commands)
 
 
@@ -101,6 +101,13 @@ def main():
         hf.track(path, platform=platform)
     elif cmd == 'unlink':
         hf.unlink()
+    elif cmd == 'untrack':
+        try:
+            path = args[1]
+        except IndexError:
+            print >> sys.stderr, usage()
+            sys.exit(1)
+        hf.untrack(path)
     else:
         print >> sys.stderr, "error: Unrecognized command '%s'" % cmd
         print >> sys.stderr, usage()
