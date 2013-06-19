@@ -67,9 +67,11 @@ class Homefiles(object):
             if self._is_directory_tracked(dirpath):
                 continue
 
+            relpath = utils.relpath(os_path, dirpath)
+
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
-                dst_dirpath = os.path.join(self.root_path, dirname)
+                dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
                     utils.symlink(src_dirpath, dst_dirpath,
                                   dry_run=self.dry_run)
@@ -78,9 +80,7 @@ class Homefiles(object):
 
             for filename in filenames:
                 src_filename = os.path.join(dirpath, filename)
-                dst_filename = os.path.join(
-                    self.root_path, utils.relpath(os_path, dirpath),
-                    filename)
+                dst_filename = os.path.join(self.root_path, relpath, filename)
                 utils.symlink(src_filename, dst_filename,
                               dry_run=self.dry_run)
 
@@ -96,16 +96,18 @@ class Homefiles(object):
         utils.log("Unlinking bundle '%s'" % platform)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
-            if not self._is_directory_tracked(dirpath):
-                for filename in filenames:
-                    file_path = os.path.join(
-                        self.root_path, utils.relpath(os_path, dirpath),
-                        filename)
-                    utils.remove_symlink(file_path, dry_run=self.dry_run)
+            if self._is_directory_tracked(dirpath):
+                continue
+
+            relpath = utils.relpath(os_path, dirpath)
+
+            for filename in filenames:
+                file_path = os.path.join(self.root_path, relpath, filename)
+                utils.remove_symlink(file_path, dry_run=self.dry_run)
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
-                dst_dirpath = os.path.join(self.root_path, dirname)
+                dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
                     utils.remove_symlink(dst_dirpath, dry_run=self.dry_run)
 
