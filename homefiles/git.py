@@ -36,10 +36,21 @@ class GitRepo(object):
         self._run(['rm', path])
         utils.log("[DONE]")
 
-    def commit_all(self, message):
-        utils.log("Commiting all files", newline=False)
-        self._run(['commit', '-a', '-m', message])
+    def commit(self, all=False, message=None):
+        args = ['commit']
+        if all:
+            args.append('-a')
+        if message:
+            args.extend(['-m', message])
+        utils.log("Commiting to Git", newline=False)
+        self._run(args)
         utils.log("[DONE]")
+
+    def diff_index(self, treeish):
+        utils.log("Diffing index to %s" % treeish, newline=False)
+        results = self._run(['diff-index', treeish])
+        utils.log("[DONE]")
+        return results
 
     def init(self):
         utils.log("Initializing repo at '%s'" % self.path, newline=False)
@@ -68,3 +79,7 @@ class GitRepo(object):
         utils.log("Cloning '%s'" % url, newline=False)
         self.__run(['clone', url], dry_run=dry_run)
         utils.log("[DONE]")
+
+    def uncommitted_changes(self):
+        stdout, stderr = self.diff_index('HEAD')
+        return len(stdout) != 0

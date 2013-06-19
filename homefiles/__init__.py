@@ -140,10 +140,14 @@ class Homefiles(object):
             marker = self._track_directory(dst_path)
             self.git.add(marker)
 
-    def sync(self, message):
-        self.git.commit_all(message)
+        self.git.commit(message="Tracking '%s'" % path)
 
-        if 'origin' not in self.git.remote():
+    def sync(self, message):
+        if self.git.uncommitted_changes():
+            self.git.commit(all=True, message=message)
+
+        stdout, stderr = self.git.remote()
+        if 'origin' not in stdout:
             origin = raw_input('GitHub username or URL to repo: ')
             url = self._make_remote_url(origin)
             self.git.remote('add', 'origin', url)
@@ -192,3 +196,4 @@ class Homefiles(object):
             utils.symlink(dst_path, src_path, dry_run=self.dry_run)
 
         self.git.rm(src_path)
+        self.git.commit(message="Untracking '%s'" % path)
