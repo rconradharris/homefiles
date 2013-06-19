@@ -24,14 +24,16 @@ class Homefiles(object):
             return self.tracked_directories[path]
         except KeyError:
             pass
-        self.tracked_directories[path] = tracked = os.path.exists(
-            os.path.join(path, '.trackeddir'))
-        if tracked:
-            return True
+
+        if os.path.exists(os.path.join(path, '.trackeddir')):
+            tracked = True
         elif path == '/':
-            return False
+            tracked = False
         else:
-            return self._is_directory_tracked(os.path.dirname(path))
+            tracked = self._is_directory_tracked(os.path.dirname(path))
+
+        self.tracked_directories[path] = tracked
+        return tracked
 
     def _track_directory(self, path):
         utils.log("Tracking directory '%s'" % path, newline=False)
@@ -147,18 +149,25 @@ class Homefiles(object):
 
         self.git.commit(message="Tracking '%s'" % path)
 
-    def sync(self, message):
+    def sync(self, message=None):
         if self.git.uncommitted_changes():
             self.git.commit(all=True, message=message)
 
         stdout, stderr = self.git.remote()
-        if 'origin' not in stdout:
+        if stdout is not None and 'origin' not in stdout:
             origin = raw_input('GitHub username or URL to repo: ')
             url = self._make_remote_url(origin)
             self.git.remote('add', 'origin', url)
 
-        self.git.pull_origin()
-        self.git.push_origin()
+        ## TODO: Detect locally removed files and mark them as untracked?
+
+        self.unlink()
+
+        try:
+            self.git.pull_origin()
+            self.git.push_origin()
+        finally:
+            self.link()
 
     def _make_remote_url(self, origin):
         if '://' in origin:

@@ -11,12 +11,15 @@ class GitRepo(object):
 
     @classmethod
     def __run(cls, args, dry_run=False):
+        results = None, None
+
         if not dry_run:
             proc = subprocess.Popen(['git'] + args, stdout=subprocess.PIPE)
             results = proc.communicate()
             if proc.returncode != 0:
                 raise Exception('Nonzero return code: %d' % proc.returncode)
-            return results
+
+        return results
 
     def _run(self, args):
         orig_path = os.getcwd()
@@ -82,4 +85,6 @@ class GitRepo(object):
 
     def uncommitted_changes(self):
         stdout, stderr = self.diff_index('HEAD')
+        if stdout is None:
+            return False
         return len(stdout) != 0

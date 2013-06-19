@@ -82,7 +82,7 @@ def main():
             message = args[1]
         except IndexError:
             message = 'Sync'
-        hf.sync(message)
+        hf.sync(message=message)
     elif cmd == 'track':
         try:
             path = args[1]
