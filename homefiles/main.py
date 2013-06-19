@@ -81,15 +81,6 @@ def main():
         except IndexError:
             print >> sys.stderr, usage()
             sys.exit(1)
-
-        if options.bundle:
-            bundle = options.bundle.capitalize()
-        else:
-            bundle = 'Generic'
-
-        if bundle not in bundles:
-            utils.warn("Bundle '%s' is not supported" % bundle)
-
         hf.track(path, bundle=bundle)
     elif cmd == 'unlink':
         hf.unlink()

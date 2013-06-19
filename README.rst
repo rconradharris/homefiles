@@ -9,7 +9,8 @@ Features
     * Track files or directories
     * Easily clone files to another machine
     * Sync updates back to GitHub
-    * Handle platform specific files
+    * OS bundles for os-specific configuration
+    * Custom bundles for machine-specific configuration
 
 
 Getting Started
@@ -44,7 +45,7 @@ The repo is divided into multiple bundles, one for each platform you intend to
 use.
 
 Within the bundle, the layout is relative to your home directory, so
-``Generic/bin/foo.sh`` will be symlinked as ``$HOME/bin/foo.sh`` for all
+``Default/bin/foo.sh`` will be symlinked as ``$HOME/bin/foo.sh`` for all
 platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
 ``$HOME/Documents/code/mac_only.sh`` only on Macs.
 
@@ -55,23 +56,23 @@ rather than symlinking the individual files.
 ::
 
     .homefiles/
-        Generic/
+        Default/
             .vimrc
             bin/
                 all_platforms.sh
-        Darwin/
+        OS-Darwin/
             Documents/
                 code/
                     mac_only.sh
                 notes/
                     .trackeddir
-        Linux/
+        OS-Linux/
             bin/
                 linux_only.sh
-        Ubuntu/
+        OS-Ubuntu/
             bin/
                 ubuntu_only.sh
-        Ubuntu-13.04/
+        OS-Ubuntu-13.04/
             bin/
                 raring_only.sh
 
@@ -84,16 +85,16 @@ Determine available platforms for current machine::
 
     $ homefiles -a
     Platforms available for this machine:
-    - Generic
-    - Darwin
+    - Default
+    - OS-Darwin
 
     $ homefiles -a
     Platforms available for this machine:
-    - Generic
-    - Linux
-    - Ubuntu
-    - Ubuntu-13.04
+    - Default
+    - OS-Linux
+    - OS-Ubuntu
+    - OS-Ubuntu-13.04
 
 Tracking a Mac specific file::
 
-    $ homefiles --platform Darwin track ~/.mac-specific-file.txt
+    $ homefiles --platform OS-Darwin track ~/.mac-specific-file.txt

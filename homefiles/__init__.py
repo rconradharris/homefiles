@@ -45,7 +45,7 @@ class Homefiles(object):
         return marker
 
     def _available_platforms(self):
-        platforms = ['Generic']
+        platforms = []
         system = platform.system()
         if system:
             platforms.append(system)
@@ -56,10 +56,13 @@ class Homefiles(object):
                     if version:
                         platforms.append('-'.join([distname, version]))
 
-        return platforms
+        return ['OS-%s' % p.capitalize() for p in platforms]
 
     def available_bundles(self):
-        return self._available_platforms()
+        bundles = ['Default']
+        bundles.extend(self._available_platforms())
+        bundles.sort()
+        return bundles
 
     def _walk_bundle(self, bundle):
         bundle_path = os.path.join(self.repo_path, bundle)
@@ -118,7 +121,7 @@ class Homefiles(object):
         for bundle in self.available_bundles():
             self._unlink_bundle(bundle)
 
-    def track(self, path, bundle='Generic'):
+    def track(self, path, bundle='Default'):
         """Track a file or a directory."""
         src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)
@@ -126,6 +129,7 @@ class Homefiles(object):
         if self.root_path not in src_path:
             raise Exception('Cannot track files outside of root path')
 
+        bundle = bundle.capitalize()
         bundle_path = os.path.join(self.repo_path, bundle)
         dst_path = os.path.join(
             bundle_path, utils.relpath(self.root_path, src_path))
