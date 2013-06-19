@@ -42,7 +42,7 @@ class Homefiles(object):
         utils.log("[DONE]")
         return marker
 
-    def _get_platforms(self):
+    def available_platforms(self):
         platforms = ['Generic']
         system = platform.system()
         if system:
@@ -83,7 +83,7 @@ class Homefiles(object):
                                   dry_run=self.dry_run)
 
     def link(self):
-        for platform in self._get_platforms():
+        for platform in self.available_platforms():
             self._link_bundle(platform)
 
     def _unlink_bundle(self, platform):
@@ -108,10 +108,10 @@ class Homefiles(object):
                     utils.remove_symlink(dst_dirpath, dry_run=self.dry_run)
 
     def unlink(self):
-        for platform in self._get_platforms():
+        for platform in self.available_platforms():
             self._unlink_bundle(platform)
 
-    def track(self, path, platform='generic'):
+    def track(self, path, platform='Generic'):
         """Track a file or a directory."""
         src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)

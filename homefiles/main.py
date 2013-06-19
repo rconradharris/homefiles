@@ -18,9 +18,17 @@ def usage():
 
 def main():
     parser = optparse.OptionParser(usage())
+    parser.add_option("-a", "--available-platforms",
+                      action="store_true", dest="available_platforms",
+                      default=False,
+                      help="Print available platforms for this machine"
+                           " and exit.")
     parser.add_option("-d", "--dry-run",
                       action="store_true", dest="dry_run", default=False,
                       help="Don't actually make the changes")
+    parser.add_option("-p", "--platform",
+                      action="store", dest="platform",
+                      help="Which platform to use. (Defaults to best guess)")
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Turns on verbose output.")
@@ -40,6 +48,13 @@ def main():
     repo_path = utils.truepath(REPO_PATH)
 
     hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
+    platforms = hf.available_platforms()
+
+    if options.available_platforms:
+        print 'Platforms available for this machine:'
+        for platform in platforms:
+            print '- %s' % platform
+        return
 
     try:
         cmd = args[0]
@@ -71,7 +86,16 @@ def main():
             print >> sys.stderr, usage()
             sys.exit(1)
 
-        hf.track(path)
+        if options.platform:
+            platform = options.platform.capitalize()
+        else:
+            platform = 'Generic'
+
+        if platform not in platforms:
+            print >> sys.stderr, "warning: Platform '%s' is not supported" \
+                                 " by this machine" % platform
+
+        hf.track(path, platform=platform)
     elif cmd == 'unlink':
         hf.unlink()
     else:

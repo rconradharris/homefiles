@@ -68,3 +68,20 @@ platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
         Ubuntu-13.04/
             bin/
                 raring_only.sh
+
+
+Advanced
+========
+
+
+Determine available platforms for current machine::
+
+    $ homefiles -a
+    Platforms available for this machine:
+    - Generic
+    - Darwin
+
+
+Tracking a Mac specific file::
+
+    $ homefiles --platform Darwin track ~/.mac-specific-file.txt
