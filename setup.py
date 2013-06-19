@@ -1,7 +1,7 @@
 import setuptools
 
 
-exec('homefiles/version.py')
+execfile('homefiles/version.py')
 
 
 setuptools.setup(
