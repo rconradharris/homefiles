@@ -123,6 +123,7 @@ class Homefiles(object):
         dst_path = os.path.join(
             os_path, utils.relpath(self.root_path, src_path))
 
+        os.makedirs(os.path.dirname(dst_path))
         try:
             utils.rename(src_path, dst_path, dry_run=self.dry_run)
             utils.symlink(dst_path, src_path, dry_run=self.dry_run)
@@ -138,16 +139,34 @@ class Homefiles(object):
 
     def sync(self, message):
         self.git.commit_all(message)
+
+        if 'origin' not in self.git.remote():
+            origin = raw_input('GitHub username or URL to repo: ')
+            url = self._make_remote_url(origin)
+            self.git.remote('add', 'origin', url)
+
         self.git.pull_origin()
         self.git.push_origin()
 
-    def clone(self, origin):
+    def _make_remote_url(self, origin):
         if '://' in origin:
             url = origin
         else:
             data = dict(username=origin, repo=REMOTE_REPO)
             url = "git@github.com:%(username)s/%(repo)s.git" % data
+        return url
 
+    def clone(self, origin):
+        url = self._make_remote_url(origin)
         self.git.clone(url, dry_run=self.dry_run)
         repo_name = url.split('/')[-1].replace('.git', '')
         utils.rename(repo_name, self.repo_path, dry_run=self.dry_run)
+
+    def init(self):
+        if os.path.exists(self.repo_path):
+            utils.warn("Homefiles repo already exists at '%s'"
+                       % self.repo_path)
+            return
+
+        utils.mkdir(self.repo_path)
+        self.git.init()

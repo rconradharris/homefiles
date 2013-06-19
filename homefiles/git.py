@@ -12,13 +12,17 @@ class GitRepo(object):
     @classmethod
     def __run(cls, args, dry_run=False):
         if not dry_run:
-            subprocess.check_call(['git'] + args)
+            proc = subprocess.Popen(['git'] + args, stdout=subprocess.PIPE)
+            results = proc.communicate()
+            if proc.returncode != 0:
+                raise Exception('Nonzero return code: %d' % proc.returncode)
+            return results
 
     def _run(self, args):
         orig_path = os.getcwd()
         os.chdir(self.path)
         try:
-            self.__run(args, dry_run=self.dry_run)
+            return self.__run(args, dry_run=self.dry_run)
         finally:
             os.chdir(orig_path)
 
@@ -32,6 +36,11 @@ class GitRepo(object):
         self._run(['commit', '-a', '-m', message])
         utils.log("[DONE]")
 
+    def init(self):
+        utils.log("Initializing repo at '%s'" % self.path, newline=False)
+        self._run(['init', '.'])
+        utils.log("[DONE]")
+
     def pull_origin(self):
         utils.log("Pulling origin", newline=False)
         self._run(['pull', 'origin', 'master'])
@@ -41,6 +50,13 @@ class GitRepo(object):
         utils.log("Pushing origin", newline=False)
         self._run(['push', 'origin', 'master'])
         utils.log("[DONE]")
+
+    def remote(self, *args, **kwargs):
+        cmd_args = ['remote']
+        if kwargs.get('verbose', False):
+            cmd_args.append('-v')
+        cmd_args.extend(args)
+        return self._run(cmd_args)
 
     @classmethod
     def clone(self, url, dry_run=False):

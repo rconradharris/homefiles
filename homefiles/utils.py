@@ -1,4 +1,5 @@
 import os
+import sys
 
 LOG_VERBOSE = False
 
@@ -8,9 +9,13 @@ def log(msg, newline=True):
         return
 
     if newline:
-        print msg
+        print >> sys.stderr, msg
     else:
-        print msg,
+        print >> sys.stderr, msg,
+
+
+def warn(msg):
+    print >> sys.stderr, 'WARNING: %s ' % msg
 
 
 def truepath(path):

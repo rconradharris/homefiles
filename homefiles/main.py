@@ -13,7 +13,8 @@ ROOT_PATH = '~'
 
 def usage():
     prog = os.path.basename(sys.argv[0])
-    return "%s [options] [clone|link|sync|track|unlink] [filename]" % prog
+    commands = "[clone|init|link|sync|track|unlink]"
+    return "%s [options] %s [filename]" % (prog, commands)
 
 
 def main():
@@ -71,6 +72,8 @@ def main():
             sys.exit(1)
 
         hf.clone(origin)
+    elif cmd == 'init':
+        hf.init()
     elif cmd == 'link':
         hf.link()
     elif cmd == 'sync':
@@ -92,8 +95,8 @@ def main():
             platform = 'Generic'
 
         if platform not in platforms:
-            print >> sys.stderr, "warning: Platform '%s' is not supported" \
-                                 " by this machine" % platform
+            utils.warn("Platform '%s' is not supported by this machine"
+                       % platform)
 
         hf.track(path, platform=platform)
     elif cmd == 'unlink':
