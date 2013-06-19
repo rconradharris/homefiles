@@ -19,17 +19,17 @@ def usage():
 
 def main():
     parser = optparse.OptionParser(usage())
-    parser.add_option("-a", "--available-platforms",
-                      action="store_true", dest="available_platforms",
+    parser.add_option("-a", "--available-bundles",
+                      action="store_true", dest="available_bundles",
                       default=False,
-                      help="Print available platforms for this machine"
+                      help="Print available bundles for this machine"
                            " and exit.")
     parser.add_option("-d", "--dry-run",
                       action="store_true", dest="dry_run", default=False,
                       help="Don't actually make the changes")
-    parser.add_option("-p", "--platform",
-                      action="store", dest="platform",
-                      help="Which platform to use. (Defaults to best guess)")
+    parser.add_option("-b", "--bundle",
+                      action="store", dest="bundle",
+                      help="Which bundle to use")
     parser.add_option("-v", "--verbose",
                       action="store_true", dest="verbose", default=False,
                       help="Turns on verbose output.")
@@ -50,12 +50,12 @@ def main():
     repo_path = utils.truepath(REPO_PATH)
 
     hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
-    platforms = hf.available_platforms()
+    bundles = hf.available_bundles()
 
-    if options.available_platforms:
-        print 'Platforms available for this machine:'
-        for platform in platforms:
-            print '- %s' % platform
+    if options.available_bundles:
+        print 'Bundles available for this machine:'
+        for bundle in bundles:
+            print '- %s' % bundle
         return
 
     try:
@@ -90,16 +90,15 @@ def main():
             print >> sys.stderr, usage()
             sys.exit(1)
 
-        if options.platform:
-            platform = options.platform.capitalize()
+        if options.bundle:
+            bundle = options.bundle.capitalize()
         else:
-            platform = 'Generic'
+            bundle = 'Generic'
 
-        if platform not in platforms:
-            utils.warn("Platform '%s' is not supported by this machine"
-                       % platform)
+        if bundle not in bundles:
+            utils.warn("Bundle '%s' is not supported" % bundle)
 
-        hf.track(path, platform=platform)
+        hf.track(path, bundle=bundle)
     elif cmd == 'unlink':
         hf.unlink()
     elif cmd == 'untrack':

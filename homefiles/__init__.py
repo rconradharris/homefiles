@@ -42,7 +42,7 @@ class Homefiles(object):
         utils.log("[DONE]")
         return marker
 
-    def available_platforms(self):
+    def _available_platforms(self):
         platforms = ['Generic']
         system = platform.system()
         if system:
@@ -56,23 +56,26 @@ class Homefiles(object):
 
         return platforms
 
-    def _walk_bundle(self, path):
-        for dirpath, dirnames, filenames in os.walk(path):
+    def available_bundles(self):
+        return self._available_platforms()
+
+    def _walk_bundle(self, bundle):
+        bundle_path = os.path.join(self.repo_path, bundle)
+        if not os.path.exists(bundle_path):
+            return
+
+        for dirpath, dirnames, filenames in os.walk(bundle_path):
             if self._is_directory_tracked(dirpath):
                 continue
 
-            relpath = utils.relpath(path, dirpath)
+            relpath = utils.relpath(bundle_path, dirpath)
             yield dirpath, dirnames, filenames, relpath
 
-    def _link_bundle(self, platform):
-        os_path = os.path.join(self.repo_path, platform)
-        if not os.path.exists(os_path):
-            return
-
-        utils.log("Linking bundle '%s'" % platform)
+    def _link_bundle(self, bundle):
+        utils.log("Linking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
-            self._walk_bundle(os_path):
+            self._walk_bundle(bundle):
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
@@ -90,18 +93,14 @@ class Homefiles(object):
                               dry_run=self.dry_run)
 
     def link(self):
-        for platform in self.available_platforms():
-            self._link_bundle(platform)
+        for bundle in self.available_bundles():
+            self._link_bundle(bundle)
 
-    def _unlink_bundle(self, platform):
-        os_path = os.path.join(self.repo_path, platform)
-        if not os.path.exists(os_path):
-            return
-
-        utils.log("Unlinking bundle '%s'" % platform)
+    def _unlink_bundle(self, bundle):
+        utils.log("Unlinking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
-            self._walk_bundle(os_path):
+            self._walk_bundle(bundle):
 
             for filename in filenames:
                 file_path = os.path.join(self.root_path, relpath, filename)
@@ -114,10 +113,10 @@ class Homefiles(object):
                     utils.remove_symlink(dst_dirpath, dry_run=self.dry_run)
 
     def unlink(self):
-        for platform in self.available_platforms():
-            self._unlink_bundle(platform)
+        for bundle in self.available_bundles():
+            self._unlink_bundle(bundle)
 
-    def track(self, path, platform='Generic'):
+    def track(self, path, bundle='Generic'):
         """Track a file or a directory."""
         src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)
@@ -125,9 +124,9 @@ class Homefiles(object):
         if self.root_path not in src_path:
             raise Exception('Cannot track files outside of root path')
 
-        os_path = os.path.join(self.repo_path, platform)
+        bundle_path = os.path.join(self.repo_path, bundle)
         dst_path = os.path.join(
-            os_path, utils.relpath(self.root_path, src_path))
+            bundle_path, utils.relpath(self.root_path, src_path))
 
         dst_dir = os.path.dirname(dst_path)
         if not os.path.exists(dst_dir):
