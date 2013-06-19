@@ -64,6 +64,9 @@ class Homefiles(object):
         utils.log("Linking bundle '%s'" % platform)
 
         for dirpath, dirnames, filenames in os.walk(os_path):
+            if self._is_directory_tracked(dirpath):
+                continue
+
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, dirname)
@@ -73,14 +76,13 @@ class Homefiles(object):
                 else:
                     utils.mkdir(dst_dirpath, dry_run=self.dry_run)
 
-            if not self._is_directory_tracked(dirpath):
-                for filename in filenames:
-                    src_filename = os.path.join(dirpath, filename)
-                    dst_filename = os.path.join(
-                        self.root_path, utils.relpath(os_path, dirpath),
-                        filename)
-                    utils.symlink(src_filename, dst_filename,
-                                  dry_run=self.dry_run)
+            for filename in filenames:
+                src_filename = os.path.join(dirpath, filename)
+                dst_filename = os.path.join(
+                    self.root_path, utils.relpath(os_path, dirpath),
+                    filename)
+                utils.symlink(src_filename, dst_filename,
+                              dry_run=self.dry_run)
 
     def link(self):
         for platform in self.available_platforms():
