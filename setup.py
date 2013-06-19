@@ -1,4 +1,4 @@
-import setuptools
+mport setuptools
 
 
 exec('homefiles/version.py')
@@ -8,7 +8,7 @@ setuptools.setup(
     name='homefiles',
     version=__version__,
     description='Your files, anywhere.',
-    url='https://github.com/rconradharris/homefiles2',
+    url='https://github.com/rconradharris/homefiles',
     license='MIT',
     author='Rick Harris',
     author_email='rconradharris@gmail.com',
