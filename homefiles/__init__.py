@@ -37,7 +37,7 @@ class Homefiles(object):
         utils.log("Tracking directory '%s'" % path, newline=False)
         marker = os.path.join(path, '.trackeddir')
         if not self.dry_run:
-            with open(marker) as f:
+            with open(marker, 'w') as f:
                 pass
         utils.log("[DONE]")
         return marker
