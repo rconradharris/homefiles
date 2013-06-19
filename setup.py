@@ -1,4 +1,4 @@
-mport setuptools
+import setuptools
 
 
 exec('homefiles/version.py')
