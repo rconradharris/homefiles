@@ -43,7 +43,8 @@ def main():
         print version.__version__
         return
 
-    utils.LOG_VERBOSE = options.verbose
+    # --dry-run implies --verbose
+    utils.LOG_VERBOSE = options.verbose or options.dry_run
 
     root_path = utils.truepath(ROOT_PATH)
     repo_path = utils.truepath(REPO_PATH)

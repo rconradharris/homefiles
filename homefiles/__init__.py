@@ -56,6 +56,14 @@ class Homefiles(object):
 
         return platforms
 
+    def _walk_bundle(self, path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            if self._is_directory_tracked(dirpath):
+                continue
+
+            relpath = utils.relpath(path, dirpath)
+            yield dirpath, dirnames, filenames, relpath
+
     def _link_bundle(self, platform):
         os_path = os.path.join(self.repo_path, platform)
         if not os.path.exists(os_path):
@@ -63,11 +71,8 @@ class Homefiles(object):
 
         utils.log("Linking bundle '%s'" % platform)
 
-        for dirpath, dirnames, filenames in os.walk(os_path):
-            if self._is_directory_tracked(dirpath):
-                continue
-
-            relpath = utils.relpath(os_path, dirpath)
+        for dirpath, dirnames, filenames, relpath in \
+            self._walk_bundle(os_path):
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
@@ -95,11 +100,8 @@ class Homefiles(object):
 
         utils.log("Unlinking bundle '%s'" % platform)
 
-        for dirpath, dirnames, filenames in os.walk(os_path):
-            if self._is_directory_tracked(dirpath):
-                continue
-
-            relpath = utils.relpath(os_path, dirpath)
+        for dirpath, dirnames, filenames, relpath in \
+            self._walk_bundle(os_path):
 
             for filename in filenames:
                 file_path = os.path.join(self.root_path, relpath, filename)
