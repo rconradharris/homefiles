@@ -9,7 +9,7 @@ Features
     * Track files or directories
     * Easily clone files to another machine
     * Sync updates back to GitHub
-    * Handles OS specific files
+    * Handle platform specific files
 
 
 Getting Started
@@ -48,6 +48,10 @@ Within the bundle, the layout is relative to your home directory, so
 platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
 ``$HOME/Documents/code/mac_only.sh`` only on Macs.
 
+If a whole directory is being tracked, the ``.trackeddir`` marker file will be
+present in it. This will cause the directory to be symlinked as a single unit,
+rather than symlinking the individual files.
+
 ::
 
     .homefiles/
@@ -59,6 +63,8 @@ platforms. In contrast, ``Darwin/Documents/code/mac_only.sh`` will symlink to
             Documents/
                 code/
                     mac_only.sh
+                notes/
+                    .trackeddir
         Linux/
             bin/
                 linux_only.sh
@@ -81,6 +87,12 @@ Determine available platforms for current machine::
     - Generic
     - Darwin
 
+    $ homefiles -a
+    Platforms available for this machine:
+    - Generic
+    - Linux
+    - Ubuntu
+    - Ubuntu-13.04
 
 Tracking a Mac specific file::
 
