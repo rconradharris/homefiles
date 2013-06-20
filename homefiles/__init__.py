@@ -28,6 +28,10 @@ class SelectedBundlesNotFound(HomefilesException):
     pass
 
 
+class NotASymlink(HomefilesException):
+    pass
+
+
 class Homefiles(object):
     def __init__(self, root_path, repo_path, dry_run=False):
         self.root_path = root_path
@@ -148,8 +152,10 @@ class Homefiles(object):
         try:
             for bundle in self._selected_bundles(selected):
                 self._link_bundle(bundle, undo_log)
+        except utils.NotASymlink as e:
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            raise NotASymlink(e.message)
         except:
-            # Ensure link is an atomic operation
             utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
 
@@ -176,8 +182,10 @@ class Homefiles(object):
         try:
             for bundle in self.available_bundles():
                 self._unlink_bundle(bundle, undo_log)
+        except utils.NotASymlink as e:
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            raise NotASymlink(e.message)
         except:
-            # Ensure unlink is an atomic operation
             utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
 

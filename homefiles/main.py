@@ -74,7 +74,12 @@ def main():
             selected = set(s.strip() for s in options.bundle.split(','))
         else:
             selected = None
-        hf.link(selected=selected)
+
+        try:
+            hf.link(selected=selected)
+        except homefiles.HomefilesException as e:
+            utils.error(e)
+            sys.exit(1)
     elif cmd == 'sync':
         try:
             message = args[1]
@@ -89,7 +94,11 @@ def main():
             sys.exit(1)
         hf.track(path, bundle=options.bundle)
     elif cmd == 'unlink':
-        hf.unlink()
+        try:
+            hf.unlink()
+        except homefiles.HomefilesException as e:
+            utils.error(e)
+            sys.exit(1)
     elif cmd == 'untrack':
         try:
             path = args[1]

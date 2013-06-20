@@ -4,6 +4,14 @@ import sys
 LOG_VERBOSE = False
 
 
+class UtilException(Exception):
+    pass
+
+
+class NotASymlink(UtilException):
+    pass
+
+
 def log(msg, newline=True):
     if not LOG_VERBOSE:
         return
@@ -35,9 +43,17 @@ def relpath(base_path, dirpath):
 
 def symlink(source, link_name, dry_run=False, undo_log=None):
     log("Symlinking '%s' -> '%s'" % (source, link_name), newline=False)
-    if os.path.exists(link_name):
+
+    exists = os.path.exists(link_name)
+
+    if exists and not os.path.islink(link_name):
+        raise NotASymlink("'%s' is not a symlink. Remove file before linking."
+                          % link_name)
+
+    if exists:
         log("[SKIPPED]")
         return
+
     try:
         if not dry_run:
             os.symlink(source, link_name)
@@ -125,7 +141,8 @@ def remove_symlink(link_name, dry_run=False, undo_log=None):
         return
 
     if not os.path.islink(link_name):
-        raise Exception("Path '%s' is not a symlink" % link_name)
+        raise NotASymlink("'%s' is not a symlink. Remove file before "
+                          "unlinking." % link_name)
 
     source = os.path.realpath(link_name)
 
