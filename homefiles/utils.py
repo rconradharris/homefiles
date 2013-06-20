@@ -103,6 +103,9 @@ def _record_undo_operation(undo_log, operation, arg):
 
 
 def undo_operations(undo_log, dry_run=False):
+    if not undo_log:
+        return
+
     # NOTE: when rolling back, we should not pass an undo_log into operations
     # because we don't want to get into an infinite loop of undo'ing things
     # we're undo'ing. Yo dawg.

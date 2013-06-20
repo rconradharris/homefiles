@@ -102,7 +102,8 @@ class Homefiles(object):
         # Ensure all selected bundles are available
         not_found = set(selected) - set(default + present + platform)
         if not_found:
-            raise SelectedBundlesNotFound(not_found)
+            raise SelectedBundlesNotFound('Could not find these bundles: %s'
+                                          % ', '.join(not_found))
 
         # Uniquify results
         seen = set()
