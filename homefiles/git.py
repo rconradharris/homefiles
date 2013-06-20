@@ -10,22 +10,24 @@ class GitRepo(object):
         self.dry_run = dry_run
 
     @classmethod
-    def __run(cls, args, dry_run=False):
+    def __run(cls, args, dry_run=False, ret_codes=None):
+        ret_codes = ret_codes or [0]
         results = None, None
 
         if not dry_run:
             proc = subprocess.Popen(['git'] + args, stdout=subprocess.PIPE)
             results = proc.communicate()
-            if proc.returncode != 0:
-                raise Exception('Nonzero return code: %d' % proc.returncode)
+            if proc.returncode not in ret_codes:
+                raise Exception('Return code %d not in %s' %
+                                (proc.returncode, ret_codes))
 
         return results
 
-    def _run(self, args):
+    def _run(self, args, ret_codes=None):
         orig_path = os.getcwd()
         os.chdir(self.path)
         try:
-            return self.__run(args, dry_run=self.dry_run)
+            return self.__run(args, dry_run=self.dry_run, ret_codes=ret_codes)
         finally:
             os.chdir(orig_path)
 
@@ -38,6 +40,19 @@ class GitRepo(object):
         utils.log("Removing '%s' from Git" % path, newline=False)
         self._run(['rm', path])
         utils.log("[DONE]")
+
+    def config(self, config, *args, **kwargs):
+        cmd_args = ['config']
+        if kwargs.get('local', False):
+            cmd_args.append('--local')
+        if kwargs.get('global_', False):
+            cmd_args.append('--global')
+        cmd_args.append(config)
+        cmd_args.extend(args)
+        utils.log("Configuring %s in Git" % config, newline=False)
+        results = self._run(cmd_args, ret_codes=kwargs.get('ret_codes'))
+        utils.log("[DONE]")
+        return results
 
     def commit(self, all=False, message=None):
         args = ['commit']

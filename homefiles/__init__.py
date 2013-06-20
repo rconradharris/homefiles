@@ -109,7 +109,7 @@ class Homefiles(object):
         utils.log("Linking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
-            self._walk_bundle(bundle):
+                self._walk_bundle(bundle):
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
@@ -134,7 +134,7 @@ class Homefiles(object):
         utils.log("Unlinking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
-            self._walk_bundle(bundle):
+                self._walk_bundle(bundle):
 
             for filename in filenames:
                 file_path = os.path.join(self.root_path, relpath, filename)
@@ -181,6 +181,27 @@ class Homefiles(object):
 
         self.git.commit(message="Tracking '%s'" % path)
 
+    def _populate_local_gitconfig(self, config):
+        """If local gitconfig is empty populate it from global gitconfig."""
+
+        # Get local
+        local_config = self.git.config(
+            config, local=True, ret_codes=[0, 1])[0].strip()
+
+        if local_config:
+            return
+
+        # Get global
+        global_config = self.git.config(
+            config, global_=True, ret_codes=[0, 1])[0].strip()
+
+        if not global_config:
+            raise Exception("Unable to find '%s' in global gitconfig" %
+                            config)
+
+        # Set local to global
+        self.git.config(config, global_config, local=True)
+
     def sync(self, message=None):
         if self.git.uncommitted_changes():
             self.git.commit(all=True, message=message)
@@ -190,6 +211,13 @@ class Homefiles(object):
             origin = raw_input('GitHub username or URL to repo: ')
             url = self._make_remote_url(origin)
             self.git.remote('add', 'origin', url)
+
+        # The `unlink` operation that follows may potentially unlink our
+        # global .gitconfig, making it impossible to generate a merge-commit.
+        # To break out of this chicken-and-egg problem, we push the global
+        # .gitconfig state into the local .gitconfig before it goes away
+        self._populate_local_gitconfig('user.name')
+        self._populate_local_gitconfig('user.email')
 
         self.unlink()
         try:
