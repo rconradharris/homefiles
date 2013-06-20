@@ -8,7 +8,15 @@ import utils
 REMOTE_REPO = '.homefiles'
 
 
-class SelectedBundlesNotFound(Exception):
+class HomefilesException(Exception):
+    pass
+
+
+class NotAuthorizedToClone(HomefilesException):
+    pass
+
+
+class SelectedBundlesNotFound(HomefilesException):
     pass
 
 
@@ -237,7 +245,13 @@ class Homefiles(object):
 
     def clone(self, origin):
         url = self._make_remote_url(origin)
-        self.git.clone(url, dry_run=self.dry_run)
+        try:
+            self.git.clone(url, dry_run=self.dry_run)
+        except git.ProcessException as e:
+            if 'Permission denied (publickey)' in e.stderr:
+                raise NotAuthorizedToClone(
+                    'Permission denied. Add SSH key to GitHub.')
+            raise
         repo_name = url.split('/')[-1].replace('.git', '')
         utils.rename(repo_name, self.repo_path, dry_run=self.dry_run)
 

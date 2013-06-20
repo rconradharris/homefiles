@@ -4,6 +4,18 @@ import subprocess
 import utils
 
 
+class ProcessException(Exception):
+    def __init__(self, returncode, stdout, stderr):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+        message = "returncode=%d stdout='%s' stderr='%s'" % (
+            returncode, stdout, stderr)
+
+        super(ProcessException, self).__init__(message)
+
+
 class GitRepo(object):
     def __init__(self, path, dry_run=False):
         self.path = path
@@ -15,13 +27,15 @@ class GitRepo(object):
         results = None, None
 
         if not dry_run:
-            proc = subprocess.Popen(['git'] + args, stdout=subprocess.PIPE)
-            results = proc.communicate()
-            if proc.returncode not in ret_codes:
-                raise Exception('Return code %d not in %s' %
-                                (proc.returncode, ret_codes))
+            proc = subprocess.Popen(['git'] + args,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdout, stderr = proc.communicate()
 
-        return results
+            if proc.returncode not in ret_codes:
+                raise ProcessException(proc.returncode, stdout, stderr)
+
+        return stdout, stderr
 
     def _run(self, args, ret_codes=None):
         orig_path = os.getcwd()

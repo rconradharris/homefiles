@@ -63,7 +63,11 @@ def main():
             print >> sys.stderr, usage()
             sys.exit(1)
 
-        hf.clone(origin)
+        try:
+            hf.clone(origin)
+        except homefiles.NotAuthorizedToClone as e:
+            print >> sys.stderr, e
+            sys.exit(1)
     elif cmd == 'init':
         hf.init()
     elif cmd == 'link':
