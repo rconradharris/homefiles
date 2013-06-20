@@ -16,6 +16,10 @@ class NotAuthorizedToClone(HomefilesException):
     pass
 
 
+class RepoAlreadyExists(HomefilesException):
+    pass
+
+
 class SelectedBundlesNotFound(HomefilesException):
     pass
 
@@ -245,13 +249,15 @@ class Homefiles(object):
 
     def clone(self, origin):
         url = self._make_remote_url(origin)
+
         try:
             self.git.clone(url, dry_run=self.dry_run)
-        except git.ProcessException as e:
-            if 'Permission denied (publickey)' in e.stderr:
-                raise NotAuthorizedToClone(
-                    'Permission denied. Add SSH key to GitHub.')
-            raise
+        except git.NotAuthorizedToClone:
+            raise NotAuthorizedToClone(
+                'Permission denied. Add SSH key to GitHub.')
+        except git.RepoAlreadyExists:
+            raise RepoAlreadyExists('.homefiles repo already exists')
+
         repo_name = url.split('/')[-1].replace('.git', '')
         utils.rename(repo_name, self.repo_path, dry_run=self.dry_run)
 

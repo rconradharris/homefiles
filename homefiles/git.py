@@ -16,7 +16,19 @@ class ProcessException(Exception):
         super(ProcessException, self).__init__(message)
 
 
-class GitRepo(object):
+class GitException(Exception):
+    pass
+
+
+class NotAuthorizedToClone(GitException):
+    pass
+
+
+class RepoAlreadyExists(GitException):
+    pass
+
+
+class RawGitRepo(object):
     def __init__(self, path, dry_run=False):
         self.path = path
         self.dry_run = dry_run
@@ -107,9 +119,25 @@ class GitRepo(object):
         return self._run(cmd_args)
 
     @classmethod
-    def clone(self, url, dry_run=False):
+    def clone(cls, url, dry_run=False):
+        cls.__run(['clone', url], dry_run=dry_run)
+
+
+class GitRepo(RawGitRepo):
+    @classmethod
+    def clone(cls, url, dry_run=False):
         utils.log("Cloning '%s'" % url, newline=False)
-        self.__run(['clone', url], dry_run=dry_run)
+
+        try:
+            return super(GitRepo, cls).clone(url, dry_run=dry_run)
+        except ProcessException as e:
+            if 'Permission denied (publickey)' in e.stderr:
+                raise NotAuthorizedToClone
+            elif 'already exists and is not an empty directory':
+                raise RepoAlreadyExists
+            else:
+                raise
+
         utils.log("[DONE]")
 
     def uncommitted_changes(self):

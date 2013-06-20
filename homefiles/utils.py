@@ -14,6 +14,10 @@ def log(msg, newline=True):
         print >> sys.stderr, msg,
 
 
+def error(msg):
+    print >> sys.stderr, 'ERROR: %s ' % msg
+
+
 def warn(msg):
     print >> sys.stderr, 'WARNING: %s ' % msg
 

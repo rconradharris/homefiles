@@ -62,11 +62,10 @@ def main():
         except IndexError:
             print >> sys.stderr, usage()
             sys.exit(1)
-
         try:
             hf.clone(origin)
-        except homefiles.NotAuthorizedToClone as e:
-            print >> sys.stderr, e
+        except homefiles.HomefilesException as e:
+            utils.error(e)
             sys.exit(1)
     elif cmd == 'init':
         hf.init()
