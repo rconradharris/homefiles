@@ -1,3 +1,4 @@
+import errno
 import os
 import subprocess
 
@@ -20,6 +21,10 @@ class GitException(Exception):
     pass
 
 
+class GitExecutableNotFound(GitException):
+    pass
+
+
 class NotAuthorizedToClone(GitException):
     pass
 
@@ -39,9 +44,15 @@ class RawGitRepo(object):
         results = None, None
 
         if not dry_run:
-            proc = subprocess.Popen(['git'] + args,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+            try:
+                proc = subprocess.Popen(['git'] + args,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    raise GitExecutableNotFound
+                raise
+
             stdout, stderr = proc.communicate()
 
             if proc.returncode not in ret_codes:

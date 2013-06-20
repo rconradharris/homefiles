@@ -12,6 +12,10 @@ class HomefilesException(Exception):
     pass
 
 
+class GitExecutableNotFound(HomefilesException):
+    pass
+
+
 class NotAuthorizedToClone(HomefilesException):
     pass
 
@@ -257,6 +261,8 @@ class Homefiles(object):
                 'Permission denied. Add SSH key to GitHub.')
         except git.RepoAlreadyExists:
             raise RepoAlreadyExists('.homefiles repo already exists')
+        except git.GitExecutableNotFound:
+            raise GitExecutableNotFound('git needs to be installed first')
 
         repo_name = url.split('/')[-1].replace('.git', '')
         utils.rename(repo_name, self.repo_path, dry_run=self.dry_run)
