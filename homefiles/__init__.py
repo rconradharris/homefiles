@@ -121,7 +121,7 @@ class Homefiles(object):
             relpath = utils.relpath(bundle_path, dirpath)
             yield dirpath, dirnames, filenames, relpath
 
-    def _link_bundle(self, bundle):
+    def _link_bundle(self, bundle, undo_log):
         utils.log("Linking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
@@ -132,19 +132,26 @@ class Homefiles(object):
                 dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
                     utils.symlink(src_dirpath, dst_dirpath,
-                                  dry_run=self.dry_run)
+                                  dry_run=self.dry_run, undo_log=undo_log)
                 else:
-                    utils.mkdir(dst_dirpath, dry_run=self.dry_run)
+                    utils.mkdir(dst_dirpath, dry_run=self.dry_run,
+                                undo_log=undo_log)
 
             for filename in filenames:
                 src_filename = os.path.join(dirpath, filename)
                 dst_filename = os.path.join(self.root_path, relpath, filename)
                 utils.symlink(src_filename, dst_filename,
-                              dry_run=self.dry_run)
+                              dry_run=self.dry_run, undo_log=undo_log)
 
     def link(self, selected=None):
-        for bundle in self._selected_bundles(selected):
-            self._link_bundle(bundle)
+        undo_log = []
+        try:
+            for bundle in self._selected_bundles(selected):
+                self._link_bundle(bundle, undo_log)
+        except:
+            # Ensure link is an atomic operation
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            raise
 
     def _unlink_bundle(self, bundle):
         utils.log("Unlinking bundle '%s'" % bundle)
