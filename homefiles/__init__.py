@@ -69,49 +69,58 @@ class Homefiles(object):
         return marker
 
     def _matching_platforms(self):
-        platforms = set()
+        """Return platforms available for this machine going from most
+        specific to least specific.
+        """
+        platforms = []
         system = platform.system()
         if system:
-            platforms.add(system)
+            platforms.append(system)
             if system == 'Linux':
                 distname, version, distid = platform.linux_distribution()
                 if distname:
-                    platforms.add(distname)
+                    platforms.append(distname)
                     if version:
-                        platforms.add('-'.join([distname, version]))
+                        platforms.append('-'.join([distname, version]))
 
-        return set('OS-%s' % p for p in platforms)
+        platforms.reverse()
+        return ['OS-%s' % p for p in platforms]
 
     def _present_bundles(self):
-        return set(os.listdir(self.repo_path)) - set(['.git'])
-
-    def _bundle_breakdown(self):
-        default = set(['Default'])
-        present = self._present_bundles()
-        platform = set(b for b in present if b.startswith('OS-'))
-        custom = present - platform - default
-        platform_matches = self._matching_platforms()
-
-        return default, platform, custom, platform_matches
+        return [b for b in os.listdir(self.repo_path) if b != '.git']
 
     def _selected_bundles(self, selected):
-        selected = selected or set()
+        """Return an ordered list of bundles from most-specific to
+        least-specific that match the selected criteria.
+        """
+        selected = selected or []
 
-        default, platform, custom, platform_matches = self._bundle_breakdown()
+        default = ['Default']
+        present = self._present_bundles()
+        platform = self._matching_platforms()
 
-        available = default | platform | custom | platform_matches
-        not_found = selected - available
+        # Ensure all selected bundles are available
+        not_found = set(selected) - set(default + present + platform)
         if not_found:
             raise SelectedBundlesNotFound(not_found)
 
-        matches = default | platform_matches | selected | (custom & selected)
-        return list(sorted(matches))
+        # Uniquify results
+        seen = set()
+        ordered_matches = []
+        for bundle in selected + platform + default:
+            if bundle in seen:
+                continue
+            ordered_matches.append(bundle)
+            seen.add(bundle)
+
+        return ordered_matches
 
     def available_bundles(self):
-        default, platform, custom, platform_matches = self._bundle_breakdown()
+        default = set(['Default'])
+        present = set(self._present_bundles())
+        platform = set(self._matching_platforms())
 
-        available = default | platform | custom | platform_matches
-        return list(sorted(available))
+        return list(sorted(default | present | platform))
 
     def _walk_bundle(self, bundle):
         bundle_path = os.path.join(self.repo_path, bundle)

@@ -71,7 +71,7 @@ def main():
         hf.init()
     elif cmd == 'link':
         if options.bundle:
-            selected = set(s.strip() for s in options.bundle.split(','))
+            selected = [s.strip() for s in options.bundle.split(',')]
         else:
             selected = None
 
