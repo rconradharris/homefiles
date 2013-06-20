@@ -45,7 +45,6 @@ def main():
     repo_path = utils.truepath(REPO_PATH)
 
     hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
-    bundles = hf.available_bundles()
 
     try:
         cmd = args[0]
@@ -55,7 +54,7 @@ def main():
         sys.exit(1)
 
     if cmd == 'bundles':
-        for bundle in bundles:
+        for bundle in hf.available_bundles():
             print '- %s' % bundle
     elif cmd == 'clone':
         try:
@@ -68,7 +67,11 @@ def main():
     elif cmd == 'init':
         hf.init()
     elif cmd == 'link':
-        hf.link()
+        if options.bundle:
+            selected = set(s.strip() for s in options.bundle.split(','))
+        else:
+            selected = None
+        hf.link(selected=selected)
     elif cmd == 'sync':
         try:
             message = args[1]

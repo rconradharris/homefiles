@@ -113,4 +113,9 @@ Determine available platforms for current machine::
 
 Tracking a Mac specific file::
 
-    $ homefiles --platform OS-Darwin track ~/.mac-specific-file.txt
+    $ homefiles --bundle OS-Darwin track ~/.mac-specific-file.txt
+
+
+Link using a custom bundles::
+
+    $ homefiles --bundle=Laptop,Personal link

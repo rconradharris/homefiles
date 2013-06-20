@@ -8,6 +8,10 @@ import utils
 REMOTE_REPO = '.homefiles'
 
 
+class SelectedBundlesNotFound(Exception):
+    pass
+
+
 class Homefiles(object):
     def __init__(self, root_path, repo_path, dry_run=False):
         self.root_path = root_path
@@ -44,25 +48,47 @@ class Homefiles(object):
         utils.log("[DONE]")
         return marker
 
-    def _available_platforms(self):
-        platforms = []
+    def _matching_platforms(self):
+        platforms = set()
         system = platform.system()
         if system:
-            platforms.append(system)
+            platforms.add(system)
             if system == 'Linux':
                 distname, version, distid = platform.linux_distribution()
                 if distname:
-                    platforms.append(distname)
+                    platforms.add(distname)
                     if version:
-                        platforms.append('-'.join([distname, version]))
+                        platforms.add('-'.join([distname, version]))
 
-        return ['OS-%s' % p.capitalize() for p in platforms]
+        return set('OS-%s' % p.capitalize() for p in platforms)
+
+    def _bundle_breakdown(self):
+        default = set(['Default'])
+        bundles = set(os.listdir(self.repo_path)) - set(['.git'])
+        platform = set(b for b in bundles if b.startswith('OS-'))
+        custom = bundles - platform - default
+        platform_matches = self._matching_platforms()
+
+        return default, platform, custom, platform_matches
+
+    def _selected_bundles(self, selected):
+        selected = selected or set()
+
+        default, platform, custom, platform_matches = self._bundle_breakdown()
+
+        available = default | platform | custom | platform_matches
+        not_found = selected - available
+        if not_found:
+            raise SelectedBundlesNotFound(not_found)
+
+        matches = default | platform_matches | selected | (custom & selected)
+        return list(sorted(matches))
 
     def available_bundles(self):
-        bundles = ['Default']
-        bundles.extend(self._available_platforms())
-        bundles.sort()
-        return bundles
+        default, platform, custom, platform_matches = self._bundle_breakdown()
+
+        available = default | platform | custom | platform_matches
+        return list(sorted(available))
 
     def _walk_bundle(self, bundle):
         bundle_path = os.path.join(self.repo_path, bundle)
@@ -97,8 +123,8 @@ class Homefiles(object):
                 utils.symlink(src_filename, dst_filename,
                               dry_run=self.dry_run)
 
-    def link(self):
-        for bundle in self.available_bundles():
+    def link(self, selected=None):
+        for bundle in self._selected_bundles(selected):
             self._link_bundle(bundle)
 
     def _unlink_bundle(self, bundle):
@@ -162,8 +188,6 @@ class Homefiles(object):
             origin = raw_input('GitHub username or URL to repo: ')
             url = self._make_remote_url(origin)
             self.git.remote('add', 'origin', url)
-
-        ## TODO: Detect locally removed files and mark them as untracked?
 
         self.unlink()
         try:
