@@ -96,6 +96,9 @@ def undo_operations(undo_log, dry_run=False):
             remove_symlink(arg, dry_run=dry_run)
         elif operation == 'mkdir':
             rmdir(arg, dry_run=dry_run)
+        elif operation == 'remove_symlink':
+            source, link_name = arg
+            symlink(source, link_name, dry_run=dry_run)
         else:
             raise Exception('Unknown undo operation %s' % operation)
 
@@ -115,13 +118,19 @@ def rename(src, dst, dry_run=False):
         log("[DONE]")
 
 
-def remove_symlink(path, dry_run=False):
-    log("Removing symlink '%s'" % path, newline=False)
-    if not os.path.exists(path):
+def remove_symlink(link_name, dry_run=False, undo_log=None):
+    log("Removing symlink '%s'" % link_name, newline=False)
+    if not os.path.exists(link_name):
         log("[SKIPPED]")
         return
-    if not os.path.islink(path):
-        raise Exception("Path '%s' is not a symlink" % path)
+
+    if not os.path.islink(link_name):
+        raise Exception("Path '%s' is not a symlink" % link_name)
+
+    source = os.path.realpath(link_name)
+
     if not dry_run:
-        os.unlink(path)
+        os.unlink(link_name)
+
+    _record_undo_operation(undo_log, 'remove_symlink', (source, link_name))
     log("[DONE]")

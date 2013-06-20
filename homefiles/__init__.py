@@ -153,7 +153,7 @@ class Homefiles(object):
             utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
 
-    def _unlink_bundle(self, bundle):
+    def _unlink_bundle(self, bundle, undo_log):
         utils.log("Unlinking bundle '%s'" % bundle)
 
         for dirpath, dirnames, filenames, relpath in \
@@ -161,17 +161,25 @@ class Homefiles(object):
 
             for filename in filenames:
                 file_path = os.path.join(self.root_path, relpath, filename)
-                utils.remove_symlink(file_path, dry_run=self.dry_run)
+                utils.remove_symlink(file_path, dry_run=self.dry_run,
+                                     undo_log=undo_log)
 
             for dirname in dirnames:
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
-                    utils.remove_symlink(dst_dirpath, dry_run=self.dry_run)
+                    utils.remove_symlink(dst_dirpath, dry_run=self.dry_run,
+                                         undo_log=undo_log)
 
     def unlink(self):
-        for bundle in self.available_bundles():
-            self._unlink_bundle(bundle)
+        undo_log = []
+        try:
+            for bundle in self.available_bundles():
+                self._unlink_bundle(bundle, undo_log)
+        except:
+            # Ensure unlink is an atomic operation
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            raise
 
     def track(self, path, bundle='Default'):
         """Track a file or a directory."""
