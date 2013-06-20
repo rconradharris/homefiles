@@ -84,7 +84,7 @@ def main():
         except IndexError:
             print >> sys.stderr, usage()
             sys.exit(1)
-        hf.track(path, bundle=bundle)
+        hf.track(path, bundle=options.bundle)
     elif cmd == 'unlink':
         hf.unlink()
     elif cmd == 'untrack':

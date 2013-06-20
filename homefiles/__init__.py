@@ -60,13 +60,16 @@ class Homefiles(object):
                     if version:
                         platforms.add('-'.join([distname, version]))
 
-        return set('OS-%s' % p.capitalize() for p in platforms)
+        return set('OS-%s' % p for p in platforms)
+
+    def _present_bundles(self):
+        return set(os.listdir(self.repo_path)) - set(['.git'])
 
     def _bundle_breakdown(self):
         default = set(['Default'])
-        bundles = set(os.listdir(self.repo_path)) - set(['.git'])
-        platform = set(b for b in bundles if b.startswith('OS-'))
-        custom = bundles - platform - default
+        present = self._present_bundles()
+        platform = set(b for b in present if b.startswith('OS-'))
+        custom = present - platform - default
         platform_matches = self._matching_platforms()
 
         return default, platform, custom, platform_matches
@@ -155,7 +158,6 @@ class Homefiles(object):
         if self.root_path not in src_path:
             raise Exception('Cannot track files outside of root path')
 
-        bundle = bundle.capitalize()
         bundle_path = os.path.join(self.repo_path, bundle)
         dst_path = os.path.join(
             bundle_path, utils.relpath(self.root_path, src_path))
