@@ -2,15 +2,50 @@
 homefiles
 =========
 
+*Your files, anywhere.*
+
+
+What is homefiles?
+==================
+
+``homefiles`` is a program that helps you keep your files synced across
+machines. Unlike *Dropbox* which syncs to-and-from a single location (the
+``Dropbox`` folder), ``homefiles`` allows you track files anywhere in your
+home directory and sync them back to their original location, even when
+syncing across machines.
+
+This makes ``homefiles`` perfect for tracking your dot-files, like your
+``.bashrc`` and ``.vimrc``. You're not limited to that, however. With
+``homefiles``, you can track any type of file--a text file of
+important phone numbers, perhaps-- or even entire directories,
+for, say, keeping ``notes`` folder on all you machines in sync.
+
+Also unlike *Dropbox*, ``homefiles`` stores your files in a ``git``
+repository, giving you the ability to track and rollback to earlier versions
+of files if necessary.
+
+``homefiles`` is not a replacement for *Dropbox* or *Google Drive*--you
+wouldn't want to store movies or photos in it. But for configuration and text
+files, ``homefiles`` is a simple way to manage, version-control, and
+distribute these across all your machines.
+
+
+What do you need to use homefiles?
+==================================
+
+* Git
+* Python 2.7+
+* GitHub Repo to store your files remotely
+
 
 Features
 ========
 
-    * Track files or directories
-    * Easily clone files to another machine
-    * Sync updates back to GitHub
-    * OS bundles for OS-specific configurations
-    * Custom bundles for machine-specific configurations
+* Track files or directories
+* Easily clone files to another machine
+* Sync updates back to GitHub
+* OS bundles for OS-specific configurations (OS is detected automatically)
+* Custom bundles for machine-specific configurations
 
 
 Getting Started
@@ -44,7 +79,7 @@ Bundles
 The data repo is composed of directories called 'bundles'. Each bundle
 represents a set of files to be copied onto the target machine.
 
-Bundles come in two flavors, OS-specific and custom. OS-specific bundles will
+Bundles come in two flavors, *OS-specific* and *custom*. OS-specific bundles will
 only be synced to machines that have a matching OS, for example Mac's will
 sync ``OS-Darwin`` bundles whereas Ubuntu will sync ``Linux``, ``Ubuntu``, and
 potentially ``Ubuntu-13.04`` bundles.
@@ -116,6 +151,6 @@ Tracking a Mac specific file::
     $ homefiles --bundle OS-Darwin track ~/.mac-specific-file.txt
 
 
-Link using a custom bundles::
+Link using custom bundles::
 
     $ homefiles --bundle=Laptop,Personal link
