@@ -199,8 +199,11 @@ class Homefiles(object):
             utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
 
-    def track(self, path, bundle='Default'):
+    def track(self, path, bundle=None):
         """Track a file or a directory."""
+        # We don't use kwarg default, because None represents default to
+        # callers
+        bundle = bundle or 'Default'
         src_path = utils.truepath(path)
         is_directory = os.path.isdir(src_path)
 
