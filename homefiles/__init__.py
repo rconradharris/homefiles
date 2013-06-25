@@ -199,7 +199,7 @@ class Homefiles(object):
                 self._link_bundle(bundle, undo_log)
             except utils.NotASymlink as e:
                 utils.undo_operations(undo_log)
-                raise NotASymlink(e.message)
+                raise NotASymlink(str(e))
             except:
                 utils.undo_operations(undo_log)
                 raise
@@ -232,7 +232,7 @@ class Homefiles(object):
                 self._unlink_bundle(bundle, undo_log)
             except utils.NotASymlink as e:
                 utils.undo_operations(undo_log)
-                raise NotASymlink(e.message)
+                raise NotASymlink(str(e))
             except:
                 utils.undo_operations(undo_log)
                 raise
