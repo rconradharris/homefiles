@@ -107,10 +107,16 @@ class Homefiles(object):
         platforms = []
         system = platform.system()
         if system:
+            # Systems appear to be capitalized, but adding explicit
+            # capitalization anyway just in case that ever changes
+            system = utils.capitalize_first_letter(system)
             platforms.append(system)
             if system == 'Linux':
                 distname, version, distid = platform.linux_distribution()
                 if distname:
+                    # Some distributions are capitalized (Ubuntu) others are
+                    # all lowercase (debian).
+                    distname = utils.capitalize_first_letter(distname)
                     platforms.append(distname)
                     if version:
                         platforms.append('-'.join([distname, version]))

@@ -12,6 +12,10 @@ class NotASymlink(UtilException):
     pass
 
 
+def capitalize_first_letter(s):
+    return s[0].capitalize() + s[1:]
+
+
 def log(msg, newline=True):
     if not LOG_VERBOSE:
         return
