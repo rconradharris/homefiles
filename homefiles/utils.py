@@ -61,7 +61,8 @@ def symlink(source, link_name, dry_run=False, undo_log=None):
         log("[FAILED]")
         raise
     else:
-        _record_undo_operation(undo_log, 'symlink', link_name)
+        _add_undo_callback(
+            undo_log, lambda: remove_symlink(link_name, dry_run=dry_run))
         log("[DONE]")
 
 
@@ -77,7 +78,7 @@ def mkdir(path, dry_run=False, undo_log=None):
         log("[FAILED]")
         raise
     else:
-        _record_undo_operation(undo_log, 'mkdir', path)
+        _add_undo_callback(undo_log, lambda: rmdir(path, dry_run=dry_run))
         log("[DONE]")
 
 
@@ -111,36 +112,20 @@ def rmdir(path, dry_run=False, undo_log=None):
         log("[FAILED]")
         raise
     else:
-        _record_undo_operation(undo_log, 'rmdir', path)
+        _add_undo_callback(undo_log, lambda: mkdir(path, dry_run=dry_run))
         log("[DONE]")
 
 
-def _record_undo_operation(undo_log, operation, arg):
+def _add_undo_callback(undo_log, callback):
     if undo_log is not None:
-        undo_log.append((operation, arg))
+        undo_log.append(callback)
 
 
-def undo_operations(undo_log, dry_run=False):
-    if not undo_log:
-        return
-
-    # NOTE: when rolling back, we should not pass an undo_log into operations
-    # because we don't want to get into an infinite loop of undo'ing things
-    # we're undo'ing. Yo dawg.
+def undo_operations(undo_log):
     log('Exception occured, rolling back...')
-    for operation, arg in reversed(undo_log):
-        if operation == 'symlink':
-            remove_symlink(arg, dry_run=dry_run)
-        elif operation == 'mkdir':
-            rmdir(arg, dry_run=dry_run)
-        elif operation == 'remove_symlink':
-            source, link_name = arg
-            symlink(source, link_name, dry_run=dry_run)
-        elif operation == 'rename':
-            source, dest = arg
-            rename(dest, source, dry_run=dry_run)
-        else:
-            raise Exception('Unknown undo operation %s' % operation)
+    while undo_log:
+        callback = undo_log.pop()
+        callback()
 
 
 def rename(source, dest, dry_run=False, undo_log=None):
@@ -155,7 +140,8 @@ def rename(source, dest, dry_run=False, undo_log=None):
         log("[FAILED]")
         raise
     else:
-        _record_undo_operation(undo_log, 'rename', (source, dest))
+        _add_undo_callback(
+            undo_log, lambda: rename(dest, source, dry_run=dry_run))
         log("[DONE]")
 
 
@@ -174,5 +160,6 @@ def remove_symlink(link_name, dry_run=False, undo_log=None):
     if not dry_run:
         os.unlink(link_name)
 
-    _record_undo_operation(undo_log, 'remove_symlink', (source, link_name))
+    _add_undo_callback(
+        undo_log, lambda: symlink(source, link_name, dry_run=dry_run))
     log("[DONE]")

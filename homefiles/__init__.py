@@ -164,10 +164,10 @@ class Homefiles(object):
             for bundle in self._selected_bundles(selected):
                 self._link_bundle(bundle, undo_log)
         except utils.NotASymlink as e:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise NotASymlink(e.message)
         except:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise
 
     def _unlink_bundle(self, bundle, undo_log):
@@ -194,10 +194,10 @@ class Homefiles(object):
             for bundle in self.available_bundles():
                 self._unlink_bundle(bundle, undo_log)
         except utils.NotASymlink as e:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise NotASymlink(e.message)
         except:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise
 
     def track(self, path, bundle=None):
@@ -227,10 +227,10 @@ class Homefiles(object):
             try:
                 utils.symlink(dst_path, src_path, dry_run=self.dry_run)
             except:
-                utils.undo_operations(undo_log, dry_run=self.dry_run)
+                utils.undo_operations(undo_log)
                 raise
         except:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise
 
         self.git.add(dst_path)
@@ -336,7 +336,7 @@ class Homefiles(object):
         try:
             utils.rename(src_path, dst_path, dry_run=self.dry_run)
         except:
-            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            utils.undo_operations(undo_log)
             raise
 
         self.git.rm(src_path)
