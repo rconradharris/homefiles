@@ -7,8 +7,9 @@ import utils
 import version
 
 
-REPO_PATH = '~/.homefiles'
-ROOT_PATH = '~'
+DEFAULT_REMOTE_REPO = '.homefiles'
+DEFAULT_REPO = '~/.homefiles'
+DEFAULT_ROOT = '~'
 
 
 def usage():
@@ -41,10 +42,12 @@ def main():
     # --dry-run implies --verbose
     utils.LOG_VERBOSE = options.verbose or options.dry_run
 
-    root_path = utils.truepath(ROOT_PATH)
-    repo_path = utils.truepath(REPO_PATH)
+    repo_path = utils.truepath(os.getenv('HOMEFILES_REPO') or DEFAULT_REPO)
+    root_path = utils.truepath(os.getenv('HOMEFILES.ROOT') or DEFAULT_ROOT)
+    remote_repo = os.getenv('HOMEFILES_REMOTE_REPO') or DEFAULT_REMOTE_REPO
 
-    hf = homefiles.Homefiles(root_path, repo_path, dry_run=options.dry_run)
+    hf = homefiles.Homefiles(root_path, repo_path, remote_repo,
+                             dry_run=options.dry_run)
 
     try:
         cmd = args[0]

@@ -5,8 +5,6 @@ import platform
 import git
 import utils
 
-REMOTE_REPO = '.homefiles'
-
 
 class HomefilesException(Exception):
     pass
@@ -33,9 +31,10 @@ class NotASymlink(HomefilesException):
 
 
 class Homefiles(object):
-    def __init__(self, root_path, repo_path, dry_run=False):
+    def __init__(self, root_path, repo_path, remote_repo, dry_run=False):
         self.root_path = root_path
         self.repo_path = repo_path
+        self.remote_repo = remote_repo
         self.dry_run = dry_run
         self.git = git.GitRepo(repo_path, dry_run=self.dry_run)
         self.tracked_directories = {}
@@ -285,7 +284,7 @@ class Homefiles(object):
         if '://' in origin:
             url = origin
         else:
-            data = dict(username=origin, repo=REMOTE_REPO)
+            data = dict(username=origin, repo=self.remote_repo)
             url = "git@github.com:%(username)s/%(repo)s.git" % data
         return url
 

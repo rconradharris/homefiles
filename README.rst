@@ -154,3 +154,25 @@ Tracking a Mac specific file::
 Link using custom bundles::
 
     $ homefiles --bundle=Laptop,Personal link
+
+
+You can override the directories homefiles uses for the root and repo by using
+environment variables::
+
+    $ HOMEFILES_REMOTE_REPO=.test_repo HOMEFILES_ROOT=~/.test_root HOMEFILES_REPO=~/.test_repo homefiles sync
+
+
+Environment Variables
+=====================
+
+
+HOMEFILES_REMOTE_REPO
+    Name or URL of the remote repo. Default: .homefiles
+
+
+HOMEFILES_REPO
+    Where to store the homefiles configuration repo. Default: $HOME/.homefiles
+
+
+HOMEFILES_ROOT
+    File are symlinked relative to this root directory. Default: $HOME
