@@ -81,6 +81,24 @@ def mkdir(path, dry_run=False, undo_log=None):
         log("[DONE]")
 
 
+def parent_directories(path):
+    """Return a list of all parent directories for a path"""
+    parents = []
+    while path != '/':
+        path = os.path.dirname(path)
+        parents.append(path)
+    parents.reverse()
+    return parents
+
+
+def makedirs(path, dry_run=False, undo_log=None):
+    paths = parent_directories(path)
+    paths.append(path)
+    for create_path in paths:
+        if not os.path.exists(create_path):
+            mkdir(create_path, dry_run=dry_run, undo_log=undo_log)
+
+
 def rmdir(path, dry_run=False, undo_log=None):
     log("Removing directory '%s'" % path, newline=False)
     if not os.path.exists(path):

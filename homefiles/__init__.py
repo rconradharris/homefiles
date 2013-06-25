@@ -43,6 +43,8 @@ class Homefiles(object):
         """A directory is tracked if it or one of its parents has a .trackeddir
         marker file.
         """
+        # TODO: this could be rewritten to not be recursive and instead use
+        # utils.parent_directories
         try:
             return self.tracked_directories[path]
         except KeyError:
@@ -213,15 +215,20 @@ class Homefiles(object):
         dst_path = os.path.join(
             bundle_path, utils.relpath(self.root_path, src_path))
 
+        undo_log = []
+
         dst_dir = os.path.dirname(dst_path)
         if not os.path.exists(dst_dir):
-            os.makedirs(dst_dir)
+            utils.makedirs(dst_dir, dry_run=self.dry_run, undo_log=undo_log)
 
-        undo_log = []
-        utils.rename(src_path, dst_path, dry_run=self.dry_run,
-                     undo_log=undo_log)
         try:
-            utils.symlink(dst_path, src_path, dry_run=self.dry_run)
+            utils.rename(src_path, dst_path, dry_run=self.dry_run,
+                         undo_log=undo_log)
+            try:
+                utils.symlink(dst_path, src_path, dry_run=self.dry_run)
+            except:
+                utils.undo_operations(undo_log, dry_run=self.dry_run)
+                raise
         except:
             utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
