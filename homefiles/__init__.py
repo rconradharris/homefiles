@@ -218,11 +218,13 @@ class Homefiles(object):
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
 
+        undo_log = []
+        utils.rename(src_path, dst_path, dry_run=self.dry_run,
+                     undo_log=undo_log)
         try:
-            utils.rename(src_path, dst_path, dry_run=self.dry_run)
             utils.symlink(dst_path, src_path, dry_run=self.dry_run)
         except:
-            utils.rename(dst_path, src_path, dry_run=self.dry_run)
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
             raise
 
         self.git.add(dst_path)
@@ -323,11 +325,13 @@ class Homefiles(object):
 
         src_path = os.path.realpath(dst_path)
 
+        undo_log = []
+        utils.remove_symlink(dst_path, dry_run=self.dry_run, undo_log=undo_log)
         try:
-            utils.remove_symlink(dst_path, dry_run=self.dry_run)
             utils.rename(src_path, dst_path, dry_run=self.dry_run)
         except:
-            utils.symlink(dst_path, src_path, dry_run=self.dry_run)
+            utils.undo_operations(undo_log, dry_run=self.dry_run)
+            raise
 
         self.git.rm(src_path)
         self.git.commit(message="Untracking '%s'" % path)

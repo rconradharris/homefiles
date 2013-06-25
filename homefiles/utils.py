@@ -118,22 +118,26 @@ def undo_operations(undo_log, dry_run=False):
         elif operation == 'remove_symlink':
             source, link_name = arg
             symlink(source, link_name, dry_run=dry_run)
+        elif operation == 'rename':
+            source, dest = arg
+            rename(dest, source, dry_run=dry_run)
         else:
             raise Exception('Unknown undo operation %s' % operation)
 
 
-def rename(src, dst, dry_run=False):
-    log("Renaming '%s' -> '%s'" % (src, dst), newline=False)
-    if os.path.exists(dst):
+def rename(source, dest, dry_run=False, undo_log=None):
+    log("Renaming '%s' -> '%s'" % (source, dest), newline=False)
+    if os.path.exists(dest):
         log("[SKIPPED]")
         return
     try:
         if not dry_run:
-            os.rename(src, dst)
+            os.rename(source, dest)
     except:
         log("[FAILED]")
         raise
     else:
+        _record_undo_operation(undo_log, 'rename', (source, dest))
         log("[DONE]")
 
 
