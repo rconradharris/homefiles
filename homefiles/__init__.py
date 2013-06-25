@@ -30,6 +30,36 @@ class NotASymlink(HomefilesException):
     pass
 
 
+class CustomBundleState(object):
+    """Records which custom bundles have been applied so that if we need to
+    re-link during a `sync` operation, we'll know which bundles to re-apply.
+    """
+    def __init__(self, repo_path):
+        self.path = os.path.join(repo_path, '.git', 'homefiles-custom-bundles')
+
+    def clear(self):
+        if os.path.exists(self.path):
+            os.unlink(self.path)
+
+    def read(self):
+        if not os.path.exists(self.path):
+            return []
+
+        bundles = []
+        with open(self.path) as f:
+            for line in f:
+                bundle = line.strip()
+                bundles.append(bundle)
+
+        return bundles
+
+    def append(self, bundle):
+        existing = set(self.read())
+        with open(self.path, 'a') as f:
+            if bundle not in existing:
+                f.write('%s\n' % bundle)
+
+
 class Homefiles(object):
     def __init__(self, root_path, repo_path, remote_repo, dry_run=False):
         self.root_path = root_path
@@ -38,6 +68,7 @@ class Homefiles(object):
         self.dry_run = dry_run
         self.git = git.GitRepo(repo_path, dry_run=self.dry_run)
         self.tracked_directories = {}
+        self.custom_bundle_state = CustomBundleState(repo_path)
 
     def _is_directory_tracked(self, path):
         """A directory is tracked if it or one of its parents has a .trackeddir
@@ -89,6 +120,9 @@ class Homefiles(object):
 
     def _present_bundles(self):
         return [b for b in os.listdir(self.repo_path) if b != '.git']
+
+    def _is_custom_bundle(self, bundle):
+        return bundle != 'Default' and not bundle.startswith('OS-')
 
     def _selected_bundles(self, selected):
         """Return an ordered list of bundles from most-specific to
@@ -160,15 +194,18 @@ class Homefiles(object):
 
     def link(self, selected=None):
         undo_log = []
-        try:
-            for bundle in self._selected_bundles(selected):
+        for bundle in self._selected_bundles(selected):
+            try:
                 self._link_bundle(bundle, undo_log)
-        except utils.NotASymlink as e:
-            utils.undo_operations(undo_log)
-            raise NotASymlink(e.message)
-        except:
-            utils.undo_operations(undo_log)
-            raise
+            except utils.NotASymlink as e:
+                utils.undo_operations(undo_log)
+                raise NotASymlink(e.message)
+            except:
+                utils.undo_operations(undo_log)
+                raise
+            else:
+                if self._is_custom_bundle(bundle):
+                    self.custom_bundle_state.append(bundle)
 
     def _unlink_bundle(self, bundle, undo_log):
         utils.log("Unlinking bundle '%s'" % bundle)
@@ -188,17 +225,20 @@ class Homefiles(object):
                     utils.remove_symlink(dst_dirpath, dry_run=self.dry_run,
                                          undo_log=undo_log)
 
-    def unlink(self):
+    def unlink(self, clear_custom_bundle_state=True):
         undo_log = []
-        try:
-            for bundle in self.available_bundles():
+        for bundle in self.available_bundles():
+            try:
                 self._unlink_bundle(bundle, undo_log)
-        except utils.NotASymlink as e:
-            utils.undo_operations(undo_log)
-            raise NotASymlink(e.message)
-        except:
-            utils.undo_operations(undo_log)
-            raise
+            except utils.NotASymlink as e:
+                utils.undo_operations(undo_log)
+                raise NotASymlink(e.message)
+            except:
+                utils.undo_operations(undo_log)
+                raise
+
+        if clear_custom_bundle_state:
+            self.custom_bundle_state.clear()
 
     def track(self, path, bundle=None):
         """Track a file or a directory."""
@@ -262,6 +302,15 @@ class Homefiles(object):
         # Set local to global
         self.git.config(config, global_config)
 
+    def _relink(self):
+        # Bundles may have been removed, so only relink bundles that still
+        # exist
+        custom_bundles = [b for b in self.custom_bundle_state.read() if
+                          os.path.exists(os.path.join(self.repo_path, b))]
+
+        utils.log('Relinking custom bundles: %s' % custom_bundles)
+        self.link(selected=custom_bundles)
+
     def sync(self, message=None):
         if self.git.uncommitted_changes():
             self.git.commit(all=True, message=message)
@@ -279,11 +328,11 @@ class Homefiles(object):
         self._populate_local_gitconfig('user.name')
         self._populate_local_gitconfig('user.email')
 
-        self.unlink()
+        self.unlink(clear_custom_bundle_state=False)
         try:
             self.git.pull_origin()
         finally:
-            self.link()
+            self._relink()
 
         self.git.push_origin()
 
