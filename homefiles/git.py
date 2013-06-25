@@ -80,8 +80,6 @@ class RawGitRepo(object):
 
     def config(self, config, *args, **kwargs):
         cmd_args = ['config']
-        if kwargs.get('local', False):
-            cmd_args.append('--local')
         if kwargs.get('global_', False):
             cmd_args.append('--global')
         cmd_args.append(config)

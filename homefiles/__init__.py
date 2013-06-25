@@ -235,7 +235,7 @@ class Homefiles(object):
 
         # Get local
         local_config = self.git.config(
-            config, local=True, ret_codes=[0, 1])[0].strip()
+            config, ret_codes=[0, 1])[0].strip()
 
         if local_config:
             return
@@ -249,7 +249,7 @@ class Homefiles(object):
                             config)
 
         # Set local to global
-        self.git.config(config, global_config, local=True)
+        self.git.config(config, global_config)
 
     def sync(self, message=None):
         if self.git.uncommitted_changes():
