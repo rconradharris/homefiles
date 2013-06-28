@@ -57,7 +57,14 @@ def main():
         sys.exit(1)
 
     if cmd == 'bundles':
-        for bundle in hf.available_bundles():
+        matching, non_matching = hf.bundle_breakdown()
+        print 'Match this machine:'
+        for bundle in sorted(matching):
+            print '- %s' % bundle
+
+        print
+        print 'Others:'
+        for bundle in sorted(non_matching):
             print '- %s' % bundle
     elif cmd == 'clone':
         try:

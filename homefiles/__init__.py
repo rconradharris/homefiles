@@ -157,12 +157,16 @@ class Homefiles(object):
 
         return ordered_matches
 
-    def available_bundles(self):
+    def bundle_breakdown(self):
         default = set(['Default'])
-        present = set(self._present_bundles())
         platform = set(self._matching_platforms())
+        custom = set(self.custom_bundle_state.read())
+        present = set(self._present_bundles())
 
-        return list(sorted(default | present | platform))
+        matching = default | platform | custom
+        non_matching = present - matching
+
+        return matching, non_matching
 
     def _walk_bundle(self, bundle):
         bundle_path = os.path.join(self.repo_path, bundle)
@@ -233,7 +237,8 @@ class Homefiles(object):
 
     def unlink(self, clear_custom_bundle_state=True):
         undo_log = []
-        for bundle in self.available_bundles():
+        matching, non_matching = self.bundle_breakdown()
+        for bundle in sorted(matching | non_matching):
             try:
                 self._unlink_bundle(bundle, undo_log)
             except utils.NotASymlink as e:
