@@ -401,3 +401,6 @@ class Homefiles(object):
 
         self.git.rm(src_path)
         self.git.commit(message="Untracking '%s'" % path)
+
+    def diff(self):
+        self.git.diff(capture_output=False)

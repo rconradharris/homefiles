@@ -14,7 +14,7 @@ DEFAULT_ROOT = '~'
 
 def usage():
     prog = os.path.basename(sys.argv[0])
-    commands = "[bundles|clone|init|link|sync|track|unlink|untrack]"
+    commands = "[bundles|clone|diff||init|link|sync|track|unlink|untrack]"
     return "%s [options] %s [filename]" % (prog, commands)
 
 
@@ -43,7 +43,7 @@ def main():
     utils.LOG_VERBOSE = options.verbose or options.dry_run
 
     repo_path = utils.truepath(os.getenv('HOMEFILES_REPO') or DEFAULT_REPO)
-    root_path = utils.truepath(os.getenv('HOMEFILES.ROOT') or DEFAULT_ROOT)
+    root_path = utils.truepath(os.getenv('HOMEFILES_ROOT') or DEFAULT_ROOT)
     remote_repo = os.getenv('HOMEFILES_REMOTE_REPO') or DEFAULT_REMOTE_REPO
 
     hf = homefiles.Homefiles(root_path, repo_path, remote_repo,
@@ -74,6 +74,12 @@ def main():
             sys.exit(1)
         try:
             hf.clone(origin)
+        except homefiles.HomefilesException as e:
+            utils.error(e)
+            sys.exit(1)
+    elif cmd == 'diff':
+        try:
+            hf.diff()
         except homefiles.HomefilesException as e:
             utils.error(e)
             sys.exit(1)

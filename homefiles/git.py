@@ -38,9 +38,15 @@ class RawGitRepo(object):
         self.path = path
         self.dry_run = dry_run
 
-    @classmethod
-    def __run(cls, args, dry_run=False, ret_codes=None):
+    @staticmethod
+    def _check_return_code(ret_code, stdout, stderr, ret_codes=None):
         ret_codes = ret_codes or [0]
+
+        if ret_code not in ret_codes:
+            raise ProcessException(ret_code, stdout, stderr)
+
+    @classmethod
+    def _run_with_output_captured(cls, args, dry_run=False, ret_codes=None):
         results = None, None
 
         if not dry_run:
@@ -54,17 +60,28 @@ class RawGitRepo(object):
                 raise
 
             stdout, stderr = proc.communicate()
-
-            if proc.returncode not in ret_codes:
-                raise ProcessException(proc.returncode, stdout, stderr)
+            cls._check_return_code(proc.returncode, stdout, stderr,
+                                   ret_codes=ret_codes)
 
         return stdout, stderr
 
-    def _run(self, args, ret_codes=None):
+    @classmethod
+    def _run_without_output_captured(cls, args, dry_run=False, ret_codes=None):
+        if not dry_run:
+            ret_code = subprocess.call(['git'] + args)
+            cls._check_return_code(ret_code, None, None, ret_codes=ret_codes)
+
+
+    def _run(self, args, ret_codes=None, capture_output=True):
         orig_path = os.getcwd()
         os.chdir(self.path)
         try:
-            return self.__run(args, dry_run=self.dry_run, ret_codes=ret_codes)
+            if capture_output:
+                return self._run_with_output_captured(
+                        args, dry_run=self.dry_run, ret_codes=ret_codes)
+            else:
+                return self._run_without_output_captured(
+                        args, dry_run=self.dry_run, ret_codes=ret_codes)
         finally:
             os.chdir(orig_path)
 
@@ -99,6 +116,14 @@ class RawGitRepo(object):
         self._run(args)
         utils.log("[DONE]")
 
+    def diff(self, *args, **kwargs):
+        capture_output = kwargs.get('capture_output', True)
+        utils.log("Diffing %s" % ' '.join(args), newline=False)
+        results = self._run(['diff'] + list(args),
+                            capture_output=capture_output)
+        utils.log("[DONE]")
+        return results
+
     def diff_index(self, treeish):
         utils.log("Diffing index to %s" % treeish, newline=False)
         results = self._run(['diff-index', treeish])
@@ -129,7 +154,7 @@ class RawGitRepo(object):
 
     @classmethod
     def clone(cls, url, dry_run=False):
-        cls.__run(['clone', url], dry_run=dry_run)
+        return cls._run_with_output_captured(['clone', url], dry_run=dry_run)
 
 
 class GitRepo(RawGitRepo):
