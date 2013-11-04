@@ -47,22 +47,21 @@ class RawGitRepo(object):
 
     @classmethod
     def _run_with_output_captured(cls, args, dry_run=False, ret_codes=None):
-        results = None, None
+        if dry_run:
+            return None, None
 
-        if not dry_run:
-            try:
-                proc = subprocess.Popen(['git'] + args,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-            except OSError as e:
-                if e.errno == errno.ENOENT:
-                    raise GitExecutableNotFound
-                raise
+        try:
+            proc = subprocess.Popen(['git'] + args,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                raise GitExecutableNotFound
+            raise
 
-            stdout, stderr = proc.communicate()
-            cls._check_return_code(proc.returncode, stdout, stderr,
-                                   ret_codes=ret_codes)
-
+        stdout, stderr = proc.communicate()
+        cls._check_return_code(proc.returncode, stdout, stderr,
+                               ret_codes=ret_codes)
         return stdout, stderr
 
     @classmethod
