@@ -294,6 +294,8 @@ class Homefiles(object):
 
     def _populate_local_gitconfig(self, config):
         """If local gitconfig is empty populate it from global gitconfig."""
+        if self.dry_run:
+            return
 
         # Get local
         local_config = self.git.config(
