@@ -1,9 +1,15 @@
 #!/usr/bin/env python
+import fnmatch
 import os
 import platform
 
 import git
 import utils
+
+
+IGNORE = [
+    '.DS_Store',
+]
 
 
 class HomefilesException(Exception):
@@ -187,6 +193,8 @@ class Homefiles(object):
                 self._walk_bundle(bundle):
 
             for dirname in dirnames:
+                if self._ignore_match(dirname):
+                    continue
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
@@ -197,6 +205,8 @@ class Homefiles(object):
                                 undo_log=undo_log)
 
             for filename in filenames:
+                if self._ignore_match(filename):
+                    continue
                 src_filename = os.path.join(dirpath, filename)
                 dst_filename = os.path.join(self.root_path, relpath, filename)
                 utils.symlink(src_filename, dst_filename,
@@ -217,6 +227,13 @@ class Homefiles(object):
                 if self._is_custom_bundle(bundle):
                     self.custom_bundle_state.append(bundle)
 
+    def _ignore_match(self, filename):
+        for pattern in IGNORE:
+            print filename, pattern
+            if fnmatch.fnmatch(filename, pattern):
+                return True
+        return False
+
     def _unlink_bundle(self, bundle, undo_log):
         utils.log("Unlinking bundle '%s'" % bundle)
 
@@ -224,11 +241,15 @@ class Homefiles(object):
                 self._walk_bundle(bundle):
 
             for filename in filenames:
+                if self._ignore_match(filename):
+                    continue
                 file_path = os.path.join(self.root_path, relpath, filename)
                 utils.remove_symlink(file_path, dry_run=self.dry_run,
                                      undo_log=undo_log)
 
             for dirname in dirnames:
+                if self._ignore_match(dirname):
+                    continue
                 src_dirpath = os.path.join(dirpath, dirname)
                 dst_dirpath = os.path.join(self.root_path, relpath, dirname)
                 if self._is_directory_tracked(src_dirpath):
